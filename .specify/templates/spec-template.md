@@ -9,13 +9,13 @@
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
+  Each user story/journey must be independently verifiable - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
   
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
-  - Tested independently
+  - Verified independently against its acceptance scenarios
   - Deployed independently
   - Demonstrated to users independently
 -->
@@ -32,6 +32,10 @@
 
 1. **Given** [initial state], **When** [action], **Then** [expected outcome]
 2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+
+Acceptance scenarios MUST be specific enough to guide automated tests. If an
+observable behavior cannot reasonably be automated, record the manual verification
+steps and rationale in the plan or task list.
 
 ---
 
@@ -94,6 +98,16 @@
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+
+### Quality Requirements *(when applicable)*
+
+- Record measurable feature-specific accessibility, performance, reliability, or
+  data-handling expectations when they affect the user journey.
+- Describe observable outcomes rather than prescribing code structure. The
+  implementation MUST follow the project's stack and engineering constraints in
+  `.specify/memory/constitution.md`.
+- Every observable behavior MUST have an automated verification strategy; document
+  manual steps and rationale for behavior that cannot reasonably be automated.
 
 ### Key Entities *(include if feature involves data)*
 

@@ -1,4 +1,20 @@
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# Team 07 - Hospital Management System
+
+A web application designed to streamline hospital management, patient records, and appointment scheduling.
+
+## Team Members
+
+- Christopher T. Bahinting
+- **Laura Jocelyne Grajeda**
+- Moises Pleytez
+
+
 
 ## Getting Started
 

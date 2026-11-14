@@ -66,3 +66,53 @@ export interface AppointmentFilters {
   patientId?: string | null;
   date?: string | null;
 }
+
+export interface BookingIdentityProfile {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+export interface BookingIdentity {
+  subjectId: string;
+  patientId: string | null;
+  profile: BookingIdentityProfile;
+}
+
+export interface BookingSlot {
+  id: string;
+  hospitalId: string;
+  specialistId: string;
+  date: string;
+  startTime: string;
+  timeZone: string;
+  startsAt: string;
+}
+
+export type BookingRequestStatus = "unresolved";
+
+export type BookingRequester =
+  | {
+      kind: "authenticated";
+      subjectId: string;
+      patientId: string | null;
+    }
+  | {
+      kind: "guest";
+    };
+
+export interface BookingRequest {
+  id: string;
+  requester: BookingRequester;
+  hospitalId: string;
+  specialistId: string;
+  slot: BookingSlot;
+  contact: {
+    name: string;
+    email: string;
+    phone: string | null;
+  };
+  reason: string | null;
+  submittedAt: string;
+  status: BookingRequestStatus;
+}

@@ -61,7 +61,9 @@ team07_hospital/
 ├── app/
 │   ├── api/
 │   │   ├── appointments/
-│   │   │   └── route.ts [existing]
+│   │   │   ├── availability/
+│   │   │   │   └── route.ts [mock availability]
+│   │   │   └── route.ts [demo request POST; no public listing]
 │   │   ├── auth/
 │   │   │   └── .gitkeep [reserved]
 │   │   ├── patients/
@@ -70,7 +72,9 @@ team07_hospital/
 │   │       ├── [id]/route.ts [implemented]
 │   │       └── route.ts [implemented]
 │   ├── appointments/
-│   │   └── page.tsx [existing]
+│   │   ├── new/
+│   │   │   └── page.tsx [request form placeholder]
+│   │   └── page.tsx [request entry]
 │   ├── hospitals/
 │   │   └── page.tsx [placeholder]
 │   ├── login/
@@ -89,9 +93,9 @@ team07_hospital/
 │   └── page.tsx [existing Home composition]
 ├── components/
 │   ├── appointments/
-│   │   ├── AppointmentCard.tsx [existing]
-│   │   ├── AppointmentForm.tsx [existing]
-│   │   └── AppointmentList.tsx [existing]
+│   │   ├── AppointmentCard.tsx [null-returning developer scaffold]
+│   │   ├── AppointmentForm.tsx [request form placeholder]
+│   │   └── AppointmentList.tsx [appointment history placeholder]
 │   ├── auth/
 │   │   └── LoginPanel.tsx [login UI only]
 │   ├── home/
@@ -123,13 +127,16 @@ team07_hospital/
 │       ├── SectionHeading.tsx [existing]
 │       └── Select.tsx [existing]
 ├── docs/
-│   └── carpet_structure.md [updated now]
+│   └── carpet_structure.md [project documentation]
 ├── lib/
 │   ├── appointments.ts [primary TypeScript mock]
 │   ├── db.ts [existing]
 │   ├── hospitals-db.ts [primary TypeScript mock]
 │   ├── auth/
 │   │   └── .gitkeep [reserved]
+│   ├── booking/
+│   │   ├── schema.ts [shared request validation]
+│   │   └── services.ts [mock identity, availability, and request repository]
 │   ├── patients.ts [primary TypeScript mock]
 │   ├── specialists.ts [primary TypeScript mock]
 │   ├── types.ts [shared models]
@@ -161,9 +168,11 @@ team07_hospital/
 and currently contains only `.gitkeep`. `docs/` contains project
 documentation, including this structure document.
 
-The Home and Specialists components are implemented. The hospitals page,
-appointments page, and patient pages remain placeholders; they do not provide
-a hospital directory, appointment workflow, or patient-record browsing.
+The Home and Specialists components are implemented. The hospitals page and
+patient pages remain placeholders; they do not provide a hospital directory
+or patient-record browsing. Appointment UI pages and components are
+placeholders. Retained appointment demo API endpoints and services are not
+connected to those pages; see the section below.
 
 ## TypeScript Data Types
 
@@ -245,13 +254,24 @@ Each current specialist sample references an existing hospital ID.
 `Appointment` still relates to a patient through `patientId`. No specialist
 relationship has been added to the appointment model or fixtures.
 
+### Booking Request Types
+
+`BookingIdentity`, `BookingIdentityProfile`, `BookingSlot`, and
+`BookingRequest` support a separate demo intake flow. A request records a
+trusted requester kind, selected hospital and specialist, an availability
+slot, contact details, and the unresolved status. Guest requests do not
+receive a `patientId`; an authenticated request can carry only the patient ID
+supplied by the trusted server-side identity provider. `BookingRequest` does
+not create or confirm an `Appointment`.
+
 No type in `lib/types.ts` uses `any`.
 
 ## Primary TypeScript Mock Data
 
 The TypeScript modules in `lib/` are now the primary mock data source for application development.
 
-They follow an in-memory data-module pattern:
+Hospital, patient, specialist, and appointment fixture modules follow an
+in-memory data-module pattern:
 
 1. Each module stores a private typed array.
 2. Each module exports read-only query functions.
@@ -262,7 +282,9 @@ They follow an in-memory data-module pattern:
 7. The modules do not use random values or the current date.
 8. No create, update, or delete operations are implemented.
 
-These modules are temporary development scaffolding. They are not a real database and do not provide persistence.
+These fixture modules are temporary development scaffolding. They are not a
+real database and do not provide persistence. Booking requests use a separate
+private in-memory mock repository; its limitations are described below.
 
 ### `lib/hospitals-db.ts`
 
@@ -347,7 +369,15 @@ Hospital
      │               patientId
      │
      └── Appointment
-             hospitalId
+            hospitalId
+
+BookingRequest (unresolved)
+    ├── hospitalId ───────────> Hospital.id
+    ├── specialistId ─────────> Specialist.id
+    ├── slot <──────────────── snapshot of mock availability slot
+    └── requester ────────────> guest or trusted server identity
+
+BookingRequest has no automatic link to Appointment.
 ```
 
 Relationship rules:
@@ -362,6 +392,15 @@ Relationship rules:
 8. Every patient references an existing hospital.
 9. An appointment's `hospitalId` matches the `hospitalId` of its referenced patient.
 10. Every specialist belongs to exactly one existing hospital through `hospitalId`.
+11. A `BookingRequest` references an existing hospital and a specialist belonging to that hospital.
+12. Its `slot` stores the selected mock availability slot as a snapshot, including the date, start time, and scheduling timezone.
+13. A `BookingRequest` remains unresolved and does not create, confirm, or automatically link to an `Appointment`.
+
+Booking requests remain separate, unresolved intake records. Their submitted
+hospital, specialist, and slot are validated together; they do not alter
+appointment fixtures or assign patient ownership from client input. Only a
+future verified workflow can resolve a request to the correct patient and
+create a definitive appointment.
 
 ## Data Safety and Determinism
 
@@ -373,8 +412,9 @@ All records are fictitious and intended only for development.
 - Dates are fixed ISO values.
 - Appointment times use fixed 24-hour values.
 - No record is generated randomly.
-- No module calls `new Date()`.
-- No module uses `Date.now()`.
+- The deterministic fixture modules do not generate records from the current
+  date. The demo booking clock intentionally reads the current time to reject
+  past slots at submission.
 - No specialist fixture contains patient information.
 - No credentials, tokens, or real contact details are stored.
 
@@ -430,22 +470,65 @@ handling, route protection, or authorization. The authentication teammate
 owns that integration. `app/api/auth/.gitkeep` and `lib/auth/.gitkeep` reserve
 empty directories without assuming a route or library structure.
 
-The `/hospitals` page is a placeholder, not a hospital directory. The
-appointments page and API are placeholders, and no booking workflow exists.
-`/orders` is a coming-soon page; `MedicineDelivery` is a future-service
-foundation only.
+The `/hospitals` page is a placeholder, not a hospital directory. `/orders`
+is a coming-soon page; `MedicineDelivery` is a future-service foundation only.
 
-## Existing Files Left Unchanged
+## Appointment UI Placeholders and Retained Demo API
 
-The existing patient and appointment data files remain separate:
+`/appointments` displays a request-form entry and an appointment-history
+placeholder. `/appointments/new` displays the coming-soon form placeholder
+and a link back to `/appointments`. The pages do not render interactive form
+fields, read identity, fetch availability, submit requests, or show personal
+appointment history. The request-form UI and history UI are not currently
+connected to the retained backend demo endpoints.
+
+The backend demo endpoints and services remain available:
+
+- `POST /api/appointments` validates and records a demo `BookingRequest`.
+- `GET /api/appointments/availability` returns mock availability slots.
+- `GET /api/appointments` returns HTTP `501` and does not list appointments.
+
+The POST path uses the shared `parseBookingInput` schema in
+`lib/booking/schema.ts` and server-side `submitBookingRequest` in
+`lib/booking/services.ts`. It normalizes and validates fields, verifies
+hospital/specialist association, derives requester ownership only from the
+server identity, validates the authoritative slot, checks the injected clock
+at submission, rechecks availability, and handles retry idempotency.
+Client-supplied patient IDs, status values, and other unsupported properties
+are rejected. `BookingAvailabilityService` supplies mock UTC slots for the
+current fictitious hospitals.
+
+The server-only `BOOKING_DEMO_IDENTITY` setting (`guest`, `signed-in`, or
+`signed-in-incomplete`) selects synthetic identity behavior for direct
+development/testing of the retained API; it defaults to `signed-in`. There is
+no public impersonation control, real authentication, or automatic
+account-to-patient matching.
+
+`BookingRequest` remains separate from the existing `Appointment` model and
+all requests are marked `unresolved`. A successful API response says “Demo
+request created. No real appointment has been reserved.” No real slot is
+reserved, no notification is sent, and no definitive Appointment is created.
+The mock repository is temporary in-memory state: it can reset on restart,
+is not shared reliably across server instances, and provides neither
+production persistence nor concurrency guarantees. Idempotency works only
+while the in-memory key record exists.
+
+Production integration remains pending: trusted real identity, guest contact
+verification, persistent storage, atomic availability/reservation handling,
+database constraints against double booking, server-side abuse controls, and
+an explicit process to resolve a verified request to the correct patient.
+
+## Patient and Appointment Data Preservation
+
+The Patient model, synthetic data, query functions, and existing appointment
+fixtures remain separate from Specialists and BookingRequest:
 
 - `lib/patients.ts`
 - `lib/appointments.ts`
 
-The Specialist model and data module were added without changing patient
-records, `patientId`, appointment fixtures, or appointment query functions.
-The specialist directory and endpoints use the same `lib/specialists.ts`
-read functions.
+`Appointment.patientId`, appointment fixtures, and appointment query
+functions remain unchanged. The demo request path does not expose a public
+appointment list or guest contact details.
 
 ## Functionality Not Implemented
 
@@ -453,18 +536,23 @@ The following functionality remains unimplemented:
 
 - MongoDB integration
 - Data persistence
-- Create operations
-- Update operations
-- Delete operations
+- Create, update, and delete operations for definitive patient, hospital,
+  specialist, and appointment records
 - Authentication
 - Authorization
 - Authentication provider and sign-in flow
 - Hospital directory and its functionality
 - Hospital-specific components
 - Patient record pages, components, and APIs
-- A functional appointment-booking workflow
+- Interactive appointment-request and personal appointment-history UI
+- Real appointment booking, confirmation, and reservation
+- Guest contact verification and notifications
+- Persistent booking-request storage and cross-instance idempotency
+- Atomic availability handling and double-booking prevention
+- Production server-side abuse controls
 - Medicine ordering, prescription collection, delivery tracking,
   geolocation, and payment
 
-The existing and new TypeScript modules provide deterministic, typed in-memory
-read operations only. No database connection or persistence is implemented.
+The existing fixture modules provide deterministic typed mock data. The
+booking-request repository is temporary in-memory demo state. No database
+connection or production persistence is implemented.

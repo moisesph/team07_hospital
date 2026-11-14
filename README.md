@@ -41,9 +41,13 @@ No authentication or authorization is implemented. Do not serve
 non-synthetic patient information from future public routes without
 appropriate access control.
 
-The appointments page and API remain placeholders. The `/orders` page states
-that medicine delivery is coming soon; ordering, tracking, prescription
-collection, geolocation, and payments are not implemented.
+The appointment UI is currently placeholder scaffolding: `/appointments`
+provides a request-form entry and an appointment-history placeholder, while
+`/appointments/new` says the request form is coming soon. The retained demo
+API endpoints are not connected to these pages. They do not create definitive
+appointments. The `/orders` page states that medicine delivery is coming soon;
+ordering, tracking, prescription collection, geolocation, and payments are
+not implemented.
 
 ## Patient Services and Login UI
 
@@ -61,6 +65,44 @@ belong to the authentication teammate. The panel contains a TODO for
 connecting the teammate's selected flow. Empty `app/api/auth/` and `lib/auth/`
 directories are reserved for that future work. No authentication behavior,
 dependency, or database integration has been added.
+
+## Appointment UI Placeholders and Retained Demo API
+
+The appointment pages are intentionally placeholders. `/appointments`
+provides a link to the request-form placeholder and displays an appointment
+history placeholder. `/appointments/new` displays “Appointment request form
+coming soon,” explains that submission is unavailable through the page, and
+links back to `/appointments`. The pages do not render form fields, read a
+mock identity, fetch availability, submit requests, or display personal
+appointment history.
+
+The backend demo endpoints and services are retained but are not connected to
+this placeholder UI:
+
+- `POST /api/appointments` validates and records a demo `BookingRequest`.
+- `GET /api/appointments/availability` returns mock availability slots.
+- `GET /api/appointments` does not expose appointment records; it returns
+  HTTP `501`.
+
+The POST path still uses the shared request schema, server-side mock identity,
+hospital/specialist/slot validation, current-time checking, availability
+rechecking, and idempotency handling. It derives requester ownership from the
+server identity rather than client input. Its in-memory repository is
+temporary, can reset on restart, is not reliably shared across instances, and
+does not guarantee production persistence or concurrency safety. It creates
+only unresolved `BookingRequest` records; no real appointment is reserved and
+no notification is sent.
+
+The server-only `BOOKING_DEMO_IDENTITY` setting accepts `guest`, `signed-in`,
+or `signed-in-incomplete` for direct development/testing of the retained API.
+It defaults to `signed-in`. There is no public impersonation control, real
+session, or account-to-patient matching by email. The authentication teammate
+replaces `bookingIdentityProvider` in `lib/booking/services.ts` with a trusted
+session provider. Guest contact verification, persistent storage, atomic
+availability/reservation handling, database constraints against double
+booking, and server-side abuse controls remain future production work. A
+verified request must be explicitly resolved to the correct patient before
+becoming an `Appointment`; no patient is selected by matching email.
 
 ## Getting Started
 

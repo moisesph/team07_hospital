@@ -2,14 +2,17 @@
 
 This tree describes the current state of the checkout. It does not include dependencies or generated files such as `node_modules/`, `.next/`, and `.git/`.
 
+Team 07 Hospital is a patient-facing hospital-network portal. Patients can
+explore hospitals, find healthcare professionals by specialty, and access
+appointment services. Medicine delivery remains a future-service foundation.
+
 ## Legend
 
-- **Existing**: a file that was already present before the structure-preparation and mock-data work.
-- **Prepared previously**: a folder or `.gitkeep` file added during the earlier structure-preparation work.
-- **Static JSON mock**: an earlier JSON fixture retained as a portable data reference.
-- **Primary TypeScript mock**: a typed in-memory data module used as the primary mock source for application development.
-- **Updated now**: a file created or updated for the typed in-memory data modules.
-- **Implemented placeholder**: the minimal `/hospitals` route page added in this task; it is not the hospital directory.
+- **Existing**: an existing project file.
+- **Prepared previously**: a folder or `.gitkeep` file retained from earlier structure preparation.
+- **Primary TypeScript mock**: a typed in-memory data module used by application code.
+- **Implemented**: working functionality or UI, with limitations described in this document.
+- **Placeholder**: a valid route or component file that does not implement its planned feature.
 - **Pending**: future functionality that has not been implemented.
 
 ## Current Tree
@@ -59,29 +62,43 @@ team07_hospital/
 │   ├── api/
 │   │   ├── appointments/
 │   │   │   └── route.ts [existing]
-│   │   └── patients/
-│   │       └── route.ts [existing]
+│   │   ├── auth/
+│   │   │   └── .gitkeep [reserved]
+│   │   ├── patients/
+│   │   │   └── route.ts [existing]
+│   │   └── specialists/
+│   │       ├── [id]/route.ts [implemented]
+│   │       └── route.ts [implemented]
 │   ├── appointments/
 │   │   └── page.tsx [existing]
 │   ├── hospitals/
-│   │   ├── .gitkeep [prepared previously]
-│   │   └── page.tsx [implemented placeholder]
+│   │   └── page.tsx [placeholder]
+│   ├── login/
+│   │   └── page.tsx [login UI only]
 │   ├── patients/
 │   │   ├── [id]/
-│   │   │   └── page.tsx [existing]
-│   │   └── page.tsx [existing]
+│   │   │   └── page.tsx [placeholder]
+│   │   └── page.tsx [placeholder]
+│   ├── specialists/
+│   │   ├── [id]/page.tsx [implemented]
+│   │   └── page.tsx [implemented]
 │   ├── globals.css [existing]
 │   ├── layout.tsx [existing]
 │   ├── loading.tsx [existing]
 │   ├── not-found.tsx [existing]
-│   └── page.tsx [existing; returns null]
+│   └── page.tsx [existing Home composition]
 ├── components/
 │   ├── appointments/
 │   │   ├── AppointmentCard.tsx [existing]
 │   │   ├── AppointmentForm.tsx [existing]
 │   │   └── AppointmentList.tsx [existing]
+│   ├── auth/
+│   │   └── LoginPanel.tsx [login UI only]
 │   ├── home/
-│   │   └── .gitkeep [prepared previously]
+│   │   ├── HomeHero.tsx [existing]
+│   │   ├── HospitalNetwork.tsx [existing]
+│   │   ├── MedicineDelivery.tsx [existing]
+│   │   └── QuickAccess.tsx [existing]
 │   ├── hospitals/
 │   │   └── .gitkeep [prepared previously]
 │   ├── layout/
@@ -93,27 +110,29 @@ team07_hospital/
 │   │   ├── PatientDetail.tsx [existing]
 │   │   ├── PatientForm.tsx [existing]
 │   │   └── PatientList.tsx [existing]
+│   ├── specialists/
+│   │   ├── SpecialistCard.tsx [implemented]
+│   │   ├── SpecialistDetail.tsx [implemented]
+│   │   └── SpecialistList.tsx [implemented]
 │   └── ui/
 │       ├── Button.tsx [existing]
 │       ├── EmptyState.tsx [existing]
 │       ├── Input.tsx [existing]
 │       ├── LoadingSpinner.tsx [existing]
+│       ├── NavigationCard.tsx [existing]
+│       ├── SectionHeading.tsx [existing]
 │       └── Select.tsx [existing]
 ├── docs/
 │   └── carpet_structure.md [updated now]
 ├── lib/
-│   ├── mock/
-│   │   ├── .gitkeep [prepared previously]
-│   │   ├── appointments.json [static JSON mock]
-│   │   ├── hospitals.json [static JSON mock]
-│   │   └── patients.json [static JSON mock]
-│   ├── appointments-db.ts [primary TypeScript mock]
-│   ├── appointments.ts [existing, unchanged]
-│   ├── db.ts [existing, unchanged]
+│   ├── appointments.ts [primary TypeScript mock]
+│   ├── db.ts [existing]
 │   ├── hospitals-db.ts [primary TypeScript mock]
-│   ├── patients-db.ts [primary TypeScript mock]
-│   ├── patients.ts [existing, unchanged]
-│   ├── types.ts [updated now]
+│   ├── auth/
+│   │   └── .gitkeep [reserved]
+│   ├── patients.ts [primary TypeScript mock]
+│   ├── specialists.ts [primary TypeScript mock]
+│   ├── types.ts [shared models]
 │   └── utils.ts [existing]
 ├── public/
 │   └── images/
@@ -138,15 +157,13 @@ team07_hospital/
 
 ## Previously Prepared Folders
 
-The following folders were prepared before the mock data modules were implemented:
+`components/hospitals/` was prepared for future hospital-related components
+and currently contains only `.gitkeep`. `docs/` contains project
+documentation, including this structure document.
 
-- `app/hospitals/`: prepared for the hospitals route. It now contains `page.tsx`, a minimal placeholder that displays “Hospitals” and “Hospital network page coming soon.” The hospital directory and its functionality remain pending.
-- `components/home/`: reserved for shared visual components for the future Home page. It currently contains only `.gitkeep`.
-- `components/hospitals/`: reserved for future hospital-related visual components. It currently contains only `.gitkeep`.
-- `lib/mock/`: originally prepared as an empty location for development fixtures. It now contains the earlier static JSON collections.
-- `docs/`: contains project documentation, including this structure document.
-
-The folder-preparation work did not implement components, API routes, database connections, CRUD operations, or business logic. The hospitals placeholder is the only route page added in this task; it does not implement hospital functionality.
+The Home and Specialists components are implemented. The hospitals page,
+appointments page, and patient pages remain placeholders; they do not provide
+a hospital directory, appointment workflow, or patient-record browsing.
 
 ## TypeScript Data Types
 
@@ -167,6 +184,18 @@ The folder-preparation work did not implement components, API routes, database c
 - `name`
 - `description`
 - `location`
+
+### Specialist Types
+
+`Specialist` is a healthcare professional, distinct from a `Patient`. It
+contains:
+
+- `id`
+- `name`
+- `specialty`
+- `hospitalId`
+
+Each current specialist sample references an existing hospital ID.
 
 ### Patient Types
 
@@ -213,6 +242,9 @@ The folder-preparation work did not implement components, API routes, database c
 - `patientId`
 - `date`
 
+`Appointment` still relates to a patient through `patientId`. No specialist
+relationship has been added to the appointment model or fixtures.
+
 No type in `lib/types.ts` uses `any`.
 
 ## Primary TypeScript Mock Data
@@ -246,9 +278,10 @@ Exported functions:
   - Returns a copied hospital record when the ID exists.
   - Returns `null` when no hospital matches the ID.
 
-### `lib/patients-db.ts`
+### `lib/patients.ts`
 
-Contains twelve typed fictitious patient records.
+Contains twelve typed fictitious patient records. It remains separate from the
+specialist directory and is not connected to the public patient pages or API.
 
 Exported functions:
 
@@ -260,7 +293,7 @@ Exported functions:
   - Returns a copied patient record when the ID exists.
   - Returns `null` when no patient matches the ID.
 
-### `lib/appointments-db.ts`
+### `lib/appointments.ts`
 
 Contains eighteen typed fictitious appointment records.
 
@@ -277,33 +310,34 @@ Exported functions:
   - Returns a copied appointment record when the ID exists.
   - Returns `null` when no appointment matches the ID.
 
-## Static JSON Mock Data
+### `lib/specialists.ts`
 
-The earlier JSON files remain in `lib/mock/`:
+Contains six typed fictitious healthcare professionals covering Dentistry,
+Physiotherapy, General Medicine, Cardiology, Pediatrics, and Dermatology.
 
-- `lib/mock/hospitals.json`
-- `lib/mock/patients.json`
-- `lib/mock/appointments.json`
+Exported functions:
 
-These files contain the same stable IDs and fictitious records used by the TypeScript modules.
+- `getSpecialists(): Specialist[]`
+  - Returns a new array of copied specialist records.
+- `getSpecialistById(id: string): Specialist | null`
+  - Returns a copied record or `null` when the ID is unknown.
+- `getSpecialistsByHospital(hospitalId?: string | null): Specialist[]`
+  - Returns copies filtered by hospital when a hospital ID is supplied.
+- `isValidSpecialistId(id: string): boolean`
+  - Validates the current synthetic ID format for the individual GET endpoint.
 
-The JSON files are retained as portable fixture references. They are not the primary mock source after the addition of the typed TypeScript modules.
-
-The JSON files:
-
-- Do not export query functions.
-- Do not provide runtime type checking.
-- Do not implement persistence.
-- Do not connect to MongoDB or another provider.
-- Do not implement a functional booking system.
+There are no static JSON fixtures in the current `lib/` tree.
 
 ## Mock Data Relationships
 
-The TypeScript modules and JSON fixtures use the same relationships:
+The typed in-memory data modules use these relationships:
 
 ```text
 Hospital
     id
+     │
+     ├── Specialist
+     │      hospitalId
      │
      ├── Patient
      │      hospitalId
@@ -327,6 +361,7 @@ Relationship rules:
 7. Every appointment references an existing patient.
 8. Every patient references an existing hospital.
 9. An appointment's `hospitalId` matches the `hospitalId` of its referenced patient.
+10. Every specialist belongs to exactly one existing hospital through `hospitalId`.
 
 ## Data Safety and Determinism
 
@@ -340,44 +375,96 @@ All records are fictitious and intended only for development.
 - No record is generated randomly.
 - No module calls `new Date()`.
 - No module uses `Date.now()`.
-- No module reads the current time during prerendering.
+- No specialist fixture contains patient information.
 - No credentials, tokens, or real contact details are stored.
 
-## Hospitals Route
+## Specialists and Public Interface
 
-The existing navigation link to `/hospitals` is unchanged. The route now opens `app/hospitals/page.tsx`, a minimal Server Component placeholder with the heading “Hospitals” and the message “Hospital network page coming soon.”
+The public directory is `/specialists`; individual profiles are
+`/specialists/[id]`. Navigation, the Home hero, QuickAccess, and the footer
+link to this directory. The directory pages and components share the
+`lib/specialists.ts` data module. Both specialist API handlers are read-only:
 
-This placeholder is not a completed hospital directory. The directory, its functionality, and any hospital-specific components remain pending. No additional CSS, data fetching, or business logic was added for this placeholder.
+- `GET /api/specialists` returns the specialists with their associated
+  hospitals.
+- `GET /api/specialists/[id]` returns one specialist and associated hospital.
+  Invalid ID formats return HTTP 400; unknown IDs return HTTP 404.
 
-`app/page.tsx` remains a valid page component that currently returns `null`. The shared root layout remains in `app/layout.tsx`.
+The Home page continues to compose the hero, QuickAccess, MedicineDelivery,
+and HospitalNetwork sections. The shared Header preserves the “Patient
+Services Portal” branding, and the shared Footer remains in the root layout.
+The Header also includes a Patient Services link to `/patients` and a Login
+link to `/login`. QuickAccess contains Hospitals, Specialists, Appointments,
+and Patient Services cards.
+
+## Retained Patient Scaffolding
+
+The `/patients` and `/patients/[id]` pages remain valid Server Components
+that display unavailable/coming-soon text. The `/patients` route is linked
+from the Header and QuickAccess as Patient Services; it is not a directory
+for browsing patient records. The `/api/patients` route remains a valid API
+route with GET and POST handlers that return HTTP 501 because the feature is
+unimplemented. The four files in `components/patients/` are retained planned
+component files and currently contain no implementation.
+
+`lib/patients.ts` retains its synthetic patient records and its
+`getPatients`/`getPatientById` query functions. It is not connected to the
+public patient pages or API. Patient records are not listed in the public
+directory, and no patient data is exposed by the Specialists feature.
+
+No authentication or authorization exists. The current patient pages and API
+do not serve patient records. Any future route that handles non-synthetic
+patient data must implement appropriate access control before serving it.
+
+## Login UI and Reserved Authentication Folders
+
+`app/login/page.tsx` and `components/auth/LoginPanel.tsx` provide a
+server-rendered login interface with a reserved integration area, an honest
+unavailable status, and a working Return to Home link. The panel has a TODO
+for connecting the authentication flow selected by the authentication
+teammate.
+
+This UI does not implement authentication. No provider has been chosen; there
+are no login forms, OAuth callbacks, registration, sessions, password
+handling, route protection, or authorization. The authentication teammate
+owns that integration. `app/api/auth/.gitkeep` and `lib/auth/.gitkeep` reserve
+empty directories without assuming a route or library structure.
+
+The `/hospitals` page is a placeholder, not a hospital directory. The
+appointments page and API are placeholders, and no booking workflow exists.
+`/orders` is a coming-soon page; `MedicineDelivery` is a future-service
+foundation only.
 
 ## Existing Files Left Unchanged
 
-The following existing data and integration files were not modified:
+The existing patient and appointment data files remain separate:
 
-- `lib/db.ts`
 - `lib/patients.ts`
 - `lib/appointments.ts`
 
-The new modules do not automatically replace imports in existing pages, components, or API routes. Application integration will be completed separately.
+The Specialist model and data module were added without changing patient
+records, `patientId`, appointment fixtures, or appointment query functions.
+The specialist directory and endpoints use the same `lib/specialists.ts`
+read functions.
 
 ## Functionality Not Implemented
 
 The following functionality remains unimplemented:
 
 - MongoDB integration
-- Integration with another database provider
 - Data persistence
 - Create operations
 - Update operations
 - Delete operations
 - Authentication
 - Authorization
+- Authentication provider and sign-in flow
 - Hospital directory and its functionality
 - Hospital-specific components
-- Integration of the new modules with existing API routes
-- Integration of the new modules with existing pages
-- Integration of the new modules with existing components
+- Patient record pages, components, and APIs
 - A functional appointment-booking workflow
+- Medicine ordering, prescription collection, delivery tracking,
+  geolocation, and payment
 
-The new TypeScript modules currently provide typed in-memory read operations only.
+The existing and new TypeScript modules provide deterministic, typed in-memory
+read operations only. No database connection or persistence is implemented.

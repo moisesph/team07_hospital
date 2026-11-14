@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Team 07 Hospital",
-  description: "Hospital patient and appointment management system.",
+  description:
+    "A patient-facing hospital network portal for finding specialists and accessing hospital services.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

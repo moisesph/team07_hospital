@@ -42,8 +42,8 @@ export default async function Footer() {
             </Link>
 
             <p>
-              Providing accessible healthcare services, appointment scheduling,
-              and secure patient record management.
+              Helping patients explore hospital locations, find healthcare
+              professionals, and access appointment services.
             </p>
           </div>
 
@@ -55,7 +55,7 @@ export default async function Footer() {
               aria-label="Footer navigation"
             >
               <Link href="/">Home</Link>
-              <Link href="/patients">Patient Records</Link>
+              <Link href="/specialists">Specialists</Link>
               <Link href="/appointments">Appointments</Link>
             </nav>
           </div>
@@ -88,12 +88,12 @@ export default async function Footer() {
             <h2>Appointments</h2>
 
             <p>
-              Schedule a non-emergency visit through the patient services
-              portal.
+              Visit the appointments section for information about patient
+              appointment services.
             </p>
 
             <Link href="/appointments" className="hospital-footer__button">
-              Book an Appointment
+              View appointments
             </Link>
 
             <aside

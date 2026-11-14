@@ -109,7 +109,7 @@ export default function Header() {
           white-space: nowrap;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
           .hospital-header__container {
             padding-block: 0.75rem;
             flex-wrap: wrap;

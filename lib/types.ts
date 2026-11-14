@@ -12,6 +12,13 @@ export interface Hospital {
   location: HospitalLocation;
 }
 
+export interface Specialist {
+  id: string;
+  name: string;
+  specialty: string;
+  hospitalId: string;
+}
+
 export type PatientGender = "female" | "male";
 
 export type BloodType =

@@ -16,7 +16,12 @@ const navigationItems = [
     icon: null,
   },
   {
-    label: "Patients",
+    label: "Specialists",
+    href: "/specialists",
+    icon: null,
+  },
+  {
+    label: "Patient Services",
     href: "/patients",
     icon: null,
   },
@@ -29,6 +34,11 @@ const navigationItems = [
     label: "Orders",
     href: "/orders",
     icon: "delivery",
+  },
+  {
+    label: "Login",
+    href: "/login",
+    icon: "login",
   },
 ] as const;
 
@@ -61,6 +71,20 @@ function DeliveryIcon() {
   );
 }
 
+function LoginIcon() {
+  return (
+    <svg
+      className="hospital-navigation__icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M14 4h6v16h-6" />
+      <path d="M3 12h12m-5-5 5 5-5 5" />
+    </svg>
+  );
+}
+
 function NavigationLinks({ pathname }: NavigationLinksProps) {
   return (
     <nav className="hospital-navigation" aria-label="Main navigation">
@@ -77,6 +101,7 @@ function NavigationLinks({ pathname }: NavigationLinksProps) {
                 aria-current={isActive ? "page" : undefined}
               >
                 {icon === "delivery" ? <DeliveryIcon /> : null}
+                {icon === "login" ? <LoginIcon /> : null}
                 <span>{label}</span>
               </Link>
             </li>
@@ -169,7 +194,7 @@ export default function Navigation() {
           outline-offset: 2px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
           .hospital-navigation {
             width: 100%;
             flex-basis: 100%;
@@ -177,7 +202,7 @@ export default function Navigation() {
 
           .hospital-navigation__list {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
           }
 
           .hospital-navigation__link {

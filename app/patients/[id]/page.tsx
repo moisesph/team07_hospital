@@ -1,8 +1,11 @@
 export default function PatientDetailsPage() {
   return (
-    <main>
-      <h1>Patient details</h1>
-      <p>Patient information goes here.</p>
-    </main>
+    <div>
+      <h1>Patient services coming soon</h1>
+      <p>
+        Patient-specific functionality is not implemented, and this page does
+        not display patient information.
+      </p>
+    </div>
   );
 }

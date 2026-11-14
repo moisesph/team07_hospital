@@ -1,8 +1,11 @@
 export default function PatientsPage() {
   return (
-    <main>
-      <h1>Patients</h1>
-      <p>Patient records go here.</p>
-    </main>
+    <div>
+      <h1>Patient Services</h1>
+      <p>
+        Patient-specific services are not available yet. This page does not
+        provide access to patient records.
+      </p>
+    </div>
   );
 }

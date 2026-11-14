@@ -10,11 +10,12 @@ const quickAccessItems = [
     icon: "hospital",
   },
   {
-    title: "Patients",
-    description: "Access the portal's patient records section.",
-    linkLabel: "View patients",
-    href: "/patients",
-    icon: "patients",
+    title: "Specialists",
+    description:
+      "Find healthcare professionals and explore their specialties across our hospital network.",
+    linkLabel: "View specialists",
+    href: "/specialists",
+    icon: "specialists",
   },
   {
     title: "Appointments",
@@ -22,6 +23,14 @@ const quickAccessItems = [
     linkLabel: "View appointments",
     href: "/appointments",
     icon: "appointments",
+  },
+  {
+    title: "Patient Services",
+    description:
+      "Patient-specific services are being prepared. This section does not provide access to patient records.",
+    linkLabel: "View patient services",
+    href: "/patients",
+    icon: "patient-services",
   },
 ] as const;
 
@@ -38,11 +47,20 @@ function QuickAccessIcon({ icon }: { icon: QuickAccessIconName }) {
     );
   }
 
-  if (icon === "patients") {
+  if (icon === "specialists") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="9" cy="8" r="3" />
-        <path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 0 1 0 6M18.5 19a4.5 4.5 0 0 0-2.5-4" />
+        <circle cx="12" cy="7.5" r="3.5" />
+        <path d="M4.5 21a7.5 7.5 0 0 1 15 0M19 4v6M16 7h6" />
+      </svg>
+    );
+  }
+
+  if (icon === "patient-services") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
       </svg>
     );
   }
@@ -104,7 +122,7 @@ export default function QuickAccess() {
 
         .home-page__card-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 1rem;
         }
 
@@ -131,6 +149,10 @@ export default function QuickAccess() {
           animation-delay: 260ms;
         }
 
+        .home-page__card-entrance--4 {
+          animation-delay: 340ms;
+        }
+
         @keyframes home-quick-access-card-enter {
           from {
             opacity: 0;
@@ -143,7 +165,13 @@ export default function QuickAccess() {
           }
         }
 
-        @media (max-width: 760px) {
+        @media (max-width: 900px) {
+          .home-page__card-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 600px) {
           .home-page__card-grid {
             grid-template-columns: minmax(0, 1fr);
           }

@@ -4,15 +4,63 @@
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-# Team 07 - Hospital Management System
+# Team 07 Hospital
 
-A web application designed to streamline hospital management, patient records, and appointment scheduling.
+A patient-facing hospital-network portal. Patients can explore hospitals,
+find healthcare professionals by specialty, and access appointment services.
+Medicine delivery remains a future-service foundation and is not yet available.
 
 ## Team Members
 
 - Christopher T. Bahinting
 - **Laura Jocelyne Grajeda**
 - Moises Pleytez
+
+## Specialists Directory
+
+The public specialist directory is available at `/specialists`, with profiles
+at `/specialists/[id]`. Read-only GET endpoints are available at
+`/api/specialists` and `/api/specialists/[id]`. The directory displays each
+professional's name, specialty, and associated hospital.
+
+`Patient` and `Specialist` are separate models. Patients are people receiving
+care; specialists are healthcare professionals. Specialists reference
+hospitals through `hospitalId`. Existing appointments continue to reference
+patients through `patientId`; appointment records have not been linked to
+specialists.
+
+Specialist, hospital, patient, and appointment examples are stored in typed,
+private in-memory arrays in `lib/`. They are deterministic development data,
+not a database, and are not persistent.
+
+The patient pages remain coming-soon scaffolding, the patient API returns
+`501`, and the retained patient component files have no implementation.
+`lib/patients.ts` continues to provide synthetic patient records and query
+functions, but those records are not exposed through the public pages or API.
+No authentication or authorization is implemented. Do not serve
+non-synthetic patient information from future public routes without
+appropriate access control.
+
+The appointments page and API remain placeholders. The `/orders` page states
+that medicine delivery is coming soon; ordering, tracking, prescription
+collection, geolocation, and payments are not implemented.
+
+## Patient Services and Login UI
+
+The Header includes a **Patient Services** link to `/patients`. That route is
+an unavailable placeholder, not a patient-record directory. The Home
+QuickAccess section also includes a Patient Services card.
+
+The `/login` page and `components/auth/LoginPanel.tsx` provide a
+server-rendered sign-in interface, a reserved integration area, and a working
+Return to Home link. Sign-in is unavailable: authentication is not connected,
+and no provider or authentication flow has been selected.
+
+Authentication integration, registration, OAuth, sessions, and authorization
+belong to the authentication teammate. The panel contains a TODO for
+connecting the teammate's selected flow. Empty `app/api/auth/` and `lib/auth/`
+directories are reserved for that future work. No authentication behavior,
+dependency, or database integration has been added.
 
 ## Getting Started
 

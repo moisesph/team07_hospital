@@ -12,7 +12,7 @@ export default function HospitalNetwork() {
           className="home-page__network-content"
           eyebrow="Hospital network"
           title="Find the right destination for your needs."
-          description="Team 07 Hospital connects multiple hospital locations through one central portal. Explore the network, open the patient records section, or review the appointments section."
+          description="Team 07 Hospital connects multiple hospital locations through one central portal. Explore the network, find healthcare professionals, or access appointment information."
           id="hospital-network-title"
         />
 

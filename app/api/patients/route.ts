@@ -1,13 +1,13 @@
 export function GET() {
   return Response.json(
-    { message: "Patient records API goes here." },
+    { message: "Patient records are not available." },
     { status: 501 },
   );
 }
 
 export function POST() {
   return Response.json(
-    { message: "Patient creation API goes here." },
+    { message: "Patient creation is not implemented." },
     { status: 501 },
   );
 }

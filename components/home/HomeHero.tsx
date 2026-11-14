@@ -19,8 +19,8 @@ export default function HomeHero() {
           </h1>
 
           <p className="home-page__hero-description">
-            Explore our hospitals and access patient records and appointments
-            from one central portal.
+            Explore hospitals, find healthcare professionals by specialty, and
+            access appointment services from one patient-focused portal.
           </p>
 
           <div className="home-page__hero-actions">
@@ -28,8 +28,8 @@ export default function HomeHero() {
               Explore hospitals
             </ButtonLink>
 
-            <ButtonLink href="/patients" variant="secondary">
-              View patients
+            <ButtonLink href="/specialists" variant="secondary">
+              Find specialists
             </ButtonLink>
 
             <ButtonLink href="/appointments" variant="secondary">

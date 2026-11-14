@@ -109,77 +109,11 @@ export default function Header() {
           white-space: nowrap;
         }
 
-        .hospital-navigation {
-          min-width: 0;
-          flex-shrink: 0;
-        }
-
-        .hospital-navigation__list {
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          list-style: none;
-        }
-
-        .hospital-navigation__item {
-          min-width: 0;
-        }
-
-        .hospital-navigation__link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 42px;
-          padding: 0.65rem 0.9rem;
-          color: var(--color-muted);
-          border-radius: 10px;
-          font-size: 0.92rem;
-          font-weight: 600;
-          line-height: 1;
-          text-decoration: none;
-          white-space: nowrap;
-          transition:
-            color 160ms ease,
-            background-color 160ms ease;
-        }
-
-        .hospital-navigation__link:hover {
-          color: var(--color-primary-hover);
-          background: var(--color-primary-soft);
-        }
-
-        .hospital-navigation__link[aria-current="page"] {
-          color: var(--color-primary);
-          background: var(--color-primary-soft);
-        }
-
-        .hospital-navigation__link:focus-visible {
-          outline: 3px solid var(--color-primary);
-          outline-offset: 2px;
-        }
-
-        @media (max-width: 760px) {
+        @media (max-width: 900px) {
           .hospital-header__container {
             padding-block: 0.75rem;
             flex-wrap: wrap;
             gap: 0.75rem 1rem;
-          }
-
-          .hospital-navigation {
-            width: 100%;
-            flex-basis: 100%;
-          }
-
-          .hospital-navigation__list {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-
-          .hospital-navigation__link {
-            width: 100%;
-            padding-inline: 0.5rem;
           }
         }
 
@@ -207,27 +141,11 @@ export default function Header() {
           .hospital-header__brand-text small {
             display: none;
           }
-
-          .hospital-navigation__link {
-            min-height: 40px;
-            font-size: 0.82rem;
-          }
         }
 
         @media (max-width: 380px) {
           .hospital-header__brand-text {
             display: none;
-          }
-
-          .hospital-navigation__link {
-            padding-inline: 0.2rem;
-            font-size: 0.75rem;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .hospital-navigation__link {
-            transition: none;
           }
         }
       `}</style>

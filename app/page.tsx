@@ -1,5 +1,6 @@
 import HomeHero from "../components/home/HomeHero";
 import HospitalNetwork from "../components/home/HospitalNetwork";
+import MedicineDelivery from "../components/home/MedicineDelivery";
 import QuickAccess from "../components/home/QuickAccess";
 import { ButtonStyles } from "../components/ui/Button";
 import { NavigationCardStyles } from "../components/ui/NavigationCard";
@@ -11,6 +12,7 @@ export default function HomePage() {
       <div className="home-page">
         <HomeHero />
         <QuickAccess />
+        <MedicineDelivery />
         <HospitalNetwork />
       </div>
 

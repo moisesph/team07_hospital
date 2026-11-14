@@ -14,8 +14,6 @@ A web application designed to streamline hospital management, patient records, a
 - **Laura Jocelyne Grajeda**
 - Moises Pleytez
 
-
-
 ## Getting Started
 
 First, run the development server:

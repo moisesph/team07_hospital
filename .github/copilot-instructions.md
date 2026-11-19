@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2026-11-04  
-**Feature**: [spec.md](../spec.md)
+**Feature**: [spec.md](../specs/001-patient-services-portal/spec.md)
 
 ## Content Quality
 

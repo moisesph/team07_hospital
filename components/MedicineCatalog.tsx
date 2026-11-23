@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Hospital, Medicine } from "../lib/types";
 import { ButtonLink, ButtonStyles } from "./ui/Button";
+import { SearchBar } from "./ui/SearchBar";
 
 interface MedicineCatalogProps {
   initialMedicines: Medicine[];
@@ -19,6 +20,7 @@ export function MedicineCatalog({
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
     null,
   );
+  const [cart, setCart] = useState<Record<string, number>>({});
 
   const hospitalMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -58,6 +60,39 @@ export function MedicineCatalog({
     });
   }, [initialMedicines, searchQuery, selectedCategory, availableOnly]);
 
+  const cartSummary = useMemo(() => {
+    let totalItems = 0;
+    let totalPrice = 0;
+    for (const med of initialMedicines) {
+      const qty = cart[med.id] ?? 0;
+      if (qty > 0) {
+        totalItems += qty;
+        totalPrice += med.price * qty;
+      }
+    }
+    return { totalItems, totalPrice };
+  }, [cart, initialMedicines]);
+
+  function addToCart(medicineId: string) {
+    setCart((prev) => ({
+      ...prev,
+      [medicineId]: (prev[medicineId] ?? 0) + 1,
+    }));
+  }
+
+  function removeFromCart(medicineId: string) {
+    setCart((prev) => {
+      const next = { ...prev };
+      const current = next[medicineId] ?? 0;
+      if (current <= 1) {
+        delete next[medicineId];
+      } else {
+        next[medicineId] = current - 1;
+      }
+      return next;
+    });
+  }
+
   return (
     <>
       <div className="catalog-page">
@@ -66,27 +101,44 @@ export function MedicineCatalog({
           <h1 className="catalog-title">Medicine Catalog</h1>
           <p className="catalog-subtitle">
             Browse available hospital medications, verify dosage strengths,
-            check stock availability, and review prescription requirements
-            before requesting home delivery.
+            check stock availability, and add items to your delivery cart.
           </p>
         </header>
 
-        {/* Search & Filter Bar */}
-        <section
-          aria-label="Filter medicines"
-          className="catalog-filters"
-        >
+        {/* Cart Summary Banner */}
+        {cartSummary.totalItems > 0 && (
+          <aside className="cart-banner" aria-label="Medicine delivery cart">
+            <div>
+              <strong>
+                Delivery Cart: {cartSummary.totalItems}{" "}
+                {cartSummary.totalItems === 1 ? "item" : "items"}
+              </strong>
+              <span> · Estimated Total: ${cartSummary.totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="cart-banner__actions">
+              <button
+                type="button"
+                onClick={() => setCart({})}
+                className="med-card__details-btn"
+              >
+                Clear Cart
+              </button>
+              <ButtonLink href="/orders" variant="primary">
+                Proceed to Delivery
+              </ButtonLink>
+            </div>
+          </aside>
+        )}
+
+        {/* Reusable Search & Filter Bar */}
+        <section aria-label="Filter medicines" className="catalog-filters">
           <div className="catalog-filters__search">
-            <label htmlFor="medicine-search" className="sr-only">
-              Search medicines
-            </label>
-            <input
+            <SearchBar
               id="medicine-search"
-              type="search"
+              label="Search medicines"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
               placeholder="Search by medicine name, generic name, or strength..."
-              className="catalog-input"
             />
           </div>
 
@@ -140,62 +192,101 @@ export function MedicineCatalog({
           </div>
         ) : (
           <div className="catalog-grid">
-            {filteredMedicines.map((medicine) => (
-              <article
-                key={medicine.id}
-                className={`med-card ${
-                  medicine.available
-                    ? "med-card--available"
-                    : "med-card--unavailable"
-                }`}
-              >
-                <div className="med-card__body">
-                  <div className="med-card__badges">
-                    <span
-                      className={`med-badge ${
-                        medicine.available
-                          ? "med-badge--in-stock"
-                          : "med-badge--out-of-stock"
-                      }`}
-                    >
-                      {medicine.available
-                        ? `Available (${medicine.stockCount} in stock)`
-                        : "Unavailable / Out of Stock"}
-                    </span>
+            {filteredMedicines.map((medicine) => {
+              const qtyInCart = cart[medicine.id] ?? 0;
 
-                    <span
-                      className={`med-badge ${
-                        medicine.rxRequired
-                          ? "med-badge--rx"
-                          : "med-badge--otc"
-                      }`}
-                    >
-                      {medicine.rxRequired ? "Rx Required" : "Over the Counter"}
-                    </span>
+              return (
+                <article
+                  key={medicine.id}
+                  className={`med-card ${
+                    medicine.available
+                      ? "med-card--available"
+                      : "med-card--unavailable"
+                  }`}
+                >
+                  <div className="med-card__body">
+                    <div className="med-card__badges">
+                      <span
+                        className={`med-badge ${
+                          medicine.available
+                            ? "med-badge--in-stock"
+                            : "med-badge--out-of-stock"
+                        }`}
+                      >
+                        {medicine.available
+                          ? `Available (${medicine.stockCount} in stock)`
+                          : "Unavailable / Out of Stock"}
+                      </span>
+
+                      <span
+                        className={`med-badge ${
+                          medicine.rxRequired
+                            ? "med-badge--rx"
+                            : "med-badge--otc"
+                        }`}
+                      >
+                        {medicine.rxRequired
+                          ? "Rx Required"
+                          : "Over the Counter"}
+                      </span>
+                    </div>
+
+                    <h2 className="med-card__name">{medicine.name}</h2>
+                    <p className="med-card__strength">
+                      {medicine.strength} · {medicine.form}
+                    </p>
+                    <p className="med-card__desc">{medicine.description}</p>
                   </div>
 
-                  <h2 className="med-card__name">{medicine.name}</h2>
-                  <p className="med-card__strength">
-                    {medicine.strength} · {medicine.form}
-                  </p>
-                  <p className="med-card__desc">{medicine.description}</p>
-                </div>
+                  <div className="med-card__footer">
+                    <span className="med-card__price">
+                      ${medicine.price.toFixed(2)}
+                    </span>
 
-                <div className="med-card__footer">
-                  <span className="med-card__price">
-                    ${medicine.price.toFixed(2)}
-                  </span>
+                    <div className="med-card__actions">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMedicine(medicine)}
+                        className="med-card__details-btn"
+                      >
+                        Details
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMedicine(medicine)}
-                    className="med-card__details-btn"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </article>
-            ))}
+                      {medicine.available &&
+                        (qtyInCart > 0 ? (
+                          <div className="qty-controls">
+                            <button
+                              type="button"
+                              onClick={() => removeFromCart(medicine.id)}
+                              aria-label={`Remove one ${medicine.name}`}
+                              className="qty-btn"
+                            >
+                              −
+                            </button>
+                            <span className="qty-value">{qtyInCart}</span>
+                            <button
+                              type="button"
+                              onClick={() => addToCart(medicine.id)}
+                              aria-label={`Add one more ${medicine.name}`}
+                              className="qty-btn"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => addToCart(medicine.id)}
+                            className="med-card__add-btn"
+                          >
+                            Add to Cart
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
 
@@ -208,10 +299,7 @@ export function MedicineCatalog({
             className="med-modal-backdrop"
             onClick={() => setSelectedMedicine(null)}
           >
-            <div
-              className="med-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="med-modal" onClick={(e) => e.stopPropagation()}>
               <div className="med-modal__header">
                 <div>
                   <p className="med-modal__category">
@@ -286,9 +374,16 @@ export function MedicineCatalog({
                 </button>
 
                 {selectedMedicine.available && (
-                  <ButtonLink href="/orders" variant="primary">
-                    Request Home Delivery
-                  </ButtonLink>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addToCart(selectedMedicine.id);
+                      setSelectedMedicine(null);
+                    }}
+                    className="med-card__add-btn"
+                  >
+                    Add to Delivery Cart
+                  </button>
                 )}
               </div>
             </div>
@@ -318,7 +413,7 @@ export function MedicineCatalog({
         }
 
         .catalog-header {
-          margin-bottom: 1.75rem;
+          margin-bottom: 1.5rem;
         }
 
         .catalog-eyebrow {
@@ -342,6 +437,28 @@ export function MedicineCatalog({
           color: var(--color-muted);
           font-size: 1rem;
           line-height: 1.65;
+        }
+
+        .cart-banner {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: 0.95rem 1.25rem;
+          margin-bottom: 1.25rem;
+          background: var(--color-primary-soft);
+          border: 1px solid var(--color-primary);
+          border-radius: 14px;
+          color: #0f172a;
+          font-size: 0.94rem;
+        }
+
+        .cart-banner__actions {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 0.65rem;
         }
 
         .catalog-filters {
@@ -403,7 +520,7 @@ export function MedicineCatalog({
 
         .catalog-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
           gap: 1.25rem;
         }
 
@@ -492,7 +609,7 @@ export function MedicineCatalog({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.75rem;
+          gap: 0.65rem;
           margin-top: 1.25rem;
           padding-top: 0.9rem;
           border-top: 1px solid #eef2ef;
@@ -504,13 +621,19 @@ export function MedicineCatalog({
           color: #0f172a;
         }
 
+        .med-card__actions {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
         .med-card__details-btn {
-          padding: 0.48rem 0.95rem;
+          padding: 0.45rem 0.8rem;
           border: 1px solid #cbd5e1;
           border-radius: 10px;
           background: #ffffff;
           color: #0f172a;
-          font-size: 0.84rem;
+          font-size: 0.82rem;
           font-weight: 600;
           font-family: inherit;
           cursor: pointer;
@@ -519,6 +642,52 @@ export function MedicineCatalog({
 
         .med-card__details-btn:hover {
           border-color: var(--color-primary);
+          color: var(--color-primary);
+        }
+
+        .med-card__add-btn {
+          padding: 0.48rem 0.85rem;
+          border: none;
+          border-radius: 10px;
+          background: var(--color-primary);
+          color: #ffffff;
+          font-size: 0.82rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: background-color 0.15s ease;
+        }
+
+        .med-card__add-btn:hover {
+          background: var(--color-primary-hover);
+        }
+
+        .qty-controls {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.2rem 0.4rem;
+          border: 1px solid var(--color-primary);
+          border-radius: 10px;
+          background: var(--color-primary-soft);
+        }
+
+        .qty-btn {
+          width: 24px;
+          height: 24px;
+          border: none;
+          border-radius: 6px;
+          background: var(--color-primary);
+          color: #ffffff;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .qty-value {
+          min-width: 18px;
+          text-align: center;
+          font-size: 0.85rem;
+          font-weight: 700;
           color: var(--color-primary);
         }
 

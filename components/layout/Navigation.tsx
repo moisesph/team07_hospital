@@ -36,6 +36,11 @@ const navigationItems = [
     icon: null,
   },
   {
+    label: "Track Delivery",
+    href: "/delivery-tracking",
+    icon: null,
+  },
+  {
     label: "Orders",
     href: "/orders",
     icon: "delivery",

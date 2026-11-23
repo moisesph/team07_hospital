@@ -36,11 +36,6 @@ const navigationItems = [
     icon: null,
   },
   {
-    label: "Track Delivery",
-    href: "/delivery-tracking",
-    icon: null,
-  },
-  {
     label: "Orders",
     href: "/orders",
     icon: "delivery",
@@ -150,7 +145,7 @@ export default function Navigation() {
           padding: 0;
           display: flex;
           align-items: center;
-          gap: 0.25rem;
+          gap: 0.35rem;
           list-style: none;
         }
 
@@ -164,7 +159,7 @@ export default function Navigation() {
           justify-content: center;
           gap: 0.38rem;
           min-height: 42px;
-          padding: 0.65rem 0.75rem;
+          padding: 0.65rem 0.85rem;
           color: var(--color-muted);
           border-radius: 10px;
           font-size: 0.9rem;

@@ -5,6 +5,7 @@ import type {
   DeliveryRequest,
   DeliveryStatus,
   Hospital,
+  Medicine,
   Patient,
 } from "../lib/types";
 import { ButtonLink, ButtonStyles } from "./ui/Button";
@@ -13,6 +14,7 @@ interface DeliveryTrackerProps {
   allDeliveries: DeliveryRequest[];
   hospitals: Hospital[];
   patients: Patient[];
+  medicines: Medicine[];
 }
 
 const STATUS_LABELS: Record<DeliveryStatus, string> = {
@@ -28,17 +30,38 @@ export function DeliveryTracker({
   allDeliveries,
   hospitals,
   patients,
+  medicines,
 }: DeliveryTrackerProps) {
+  const [deliveries, setDeliveries] =
+    useState<DeliveryRequest[]>(allDeliveries);
   const [activePatientId, setActivePatientId] = useState<string>("patient-001");
   const [referenceInput, setReferenceInput] = useState("");
   const [selectedDeliveryId, setSelectedDeliveryId] =
     useState<string>("delivery-001");
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
+  // Delivery Address & Order Request Form State (#9)
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [selectedMedicineId, setSelectedMedicineId] = useState<string>(
+    medicines.find((m) => m.available)?.id ?? "",
+  );
+  const [quantity, setQuantity] = useState<number>(1);
+  const [streetAddress, setStreetAddress] = useState("");
+  const [cityStateZip, setCityStateZip] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+
+  const availableMedicines = useMemo(
+    () => medicines.filter((m) => m.available),
+    [medicines],
+  );
+
   const patientDeliveries = useMemo(() => {
     if (!activePatientId) return [];
-    return allDeliveries.filter((d) => d.patientId === activePatientId);
-  }, [allDeliveries, activePatientId]);
+    return deliveries.filter((d) => d.patientId === activePatientId);
+  }, [deliveries, activePatientId]);
 
   const selectedDelivery = useMemo(() => {
     if (!activePatientId) return null;
@@ -57,8 +80,10 @@ export function DeliveryTracker({
   function handlePatientChange(nextPatientId: string) {
     setActivePatientId(nextPatientId);
     setAccessMessage(null);
+    setFormError(null);
+    setFormSuccess(null);
     setReferenceInput("");
-    const firstOrder = allDeliveries.find((d) => d.patientId === nextPatientId);
+    const firstOrder = deliveries.find((d) => d.patientId === nextPatientId);
     if (firstOrder) {
       setSelectedDeliveryId(firstOrder.id);
     }
@@ -82,7 +107,7 @@ export function DeliveryTracker({
       return;
     }
 
-    const found = allDeliveries.find(
+    const found = deliveries.find(
       (d) =>
         d.referenceCode.toLowerCase() === trimmed ||
         d.id.toLowerCase() === trimmed,
@@ -106,25 +131,134 @@ export function DeliveryTracker({
     setSelectedDeliveryId(found.id);
   }
 
+  function handleCreateDelivery(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+    setFormSuccess(null);
+
+    if (!activePatientId) {
+      setFormError("You must be signed in to submit a delivery address.");
+      return;
+    }
+
+    const med = availableMedicines.find((m) => m.id === selectedMedicineId);
+    if (!med) {
+      setFormError("Please select an available medicine.");
+      return;
+    }
+
+    if (!streetAddress.trim() || !cityStateZip.trim() || !contactPhone.trim()) {
+      setFormError(
+        "Please complete your street address, city/state/ZIP, and contact phone.",
+      );
+      return;
+    }
+
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const newId = `delivery-${Date.now()}`;
+    const newRef = `DEL-2026-${randomCode}`;
+    const nowLabel = "Just now · Pending Pharmacy Confirmation";
+
+    const newRequest: DeliveryRequest = {
+      id: newId,
+      referenceCode: newRef,
+      patientId: activePatientId,
+      hospitalId: med.hospitalId,
+      items: [
+        {
+          medicineId: med.id,
+          medicineName: med.name,
+          strength: med.strength,
+          quantity: Math.max(1, quantity),
+        },
+      ],
+      deliveryAddress: `${streetAddress.trim()}, ${cityStateZip.trim()}`,
+      contactPhone: contactPhone.trim(),
+      notes: deliveryNotes.trim() ? deliveryNotes.trim() : null,
+      status: "awaiting_confirmation",
+      estimatedDelivery: "Pending pharmacy review",
+      createdAt: new Date().toISOString(),
+      timeline: [
+        {
+          status: "awaiting_confirmation",
+          label: "Request Submitted (Awaiting Confirmation)",
+          timestamp: nowLabel,
+          completed: true,
+        },
+        {
+          status: "confirmed",
+          label: "Prescription & Order Confirmed",
+          timestamp: null,
+          completed: false,
+        },
+        {
+          status: "preparing",
+          label: "Packed at Hospital Pharmacy",
+          timestamp: null,
+          completed: false,
+        },
+        {
+          status: "out_for_delivery",
+          label: "Out for Home Delivery",
+          timestamp: null,
+          completed: false,
+        },
+        {
+          status: "delivered",
+          label: "Delivered to Patient",
+          timestamp: null,
+          completed: false,
+        },
+      ],
+    };
+
+    setDeliveries((prev) => [newRequest, ...prev]);
+    setSelectedDeliveryId(newId);
+    setReferenceInput(newRef);
+    setStreetAddress("");
+    setCityStateZip("");
+    setContactPhone("");
+    setDeliveryNotes("");
+    setQuantity(1);
+    setShowRequestForm(false);
+    setFormSuccess(
+      `Delivery request ${newRef} submitted! You can track its live status below.`,
+    );
+  }
+
   const demoPatients = patients.slice(0, 2);
 
   return (
     <>
       <div className="tracking-page">
         <header className="tracking-header">
-          <p className="tracking-eyebrow">Home Delivery</p>
-          <h1 className="tracking-title">Delivery Status Tracking</h1>
-          <p className="tracking-subtitle">
-            Monitor your submitted medicine delivery requests, review assigned
-            reference codes, and follow real-time pharmacy fulfillment updates.
-          </p>
+          <div className="tracking-header__row">
+            <div>
+              <p className="tracking-eyebrow">Home Delivery</p>
+              <h1 className="tracking-title">Delivery &amp; Order Tracking</h1>
+              <p className="tracking-subtitle">
+                Enter your home delivery address to submit a medication delivery
+                request or track the live status of your existing orders.
+              </p>
+            </div>
+
+            {activePatientId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRequestForm((prev) => !prev);
+                  setFormError(null);
+                }}
+                className="tracking-submit-btn"
+              >
+                {showRequestForm ? "Close Address Form" : "+ New Delivery Request"}
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Session / Ownership Preview Switcher */}
-        <section
-          aria-label="Active patient session"
-          className="session-bar"
-        >
+        <section aria-label="Active patient session" className="session-bar">
           <div>
             <span className="session-bar__label">Active Patient Session:</span>
             <p className="session-bar__hint">
@@ -148,13 +282,20 @@ export function DeliveryTracker({
           </select>
         </section>
 
+        {formSuccess && (
+          <p role="status" className="tracking-success">
+            {formSuccess}
+          </p>
+        )}
+
         {/* Unauthenticated Access Denied State */}
         {!activePatientId ? (
           <section className="access-denied-card" role="alert">
             <h2>Sign In Required</h2>
             <p>
               Access denied. You must be signed in as a registered patient to
-              view medicine delivery requests and tracking statuses.
+              submit a delivery address or view medicine delivery tracking
+              statuses.
             </p>
             <div className="access-denied-card__actions">
               <ButtonLink href="/login" variant="primary">
@@ -171,6 +312,131 @@ export function DeliveryTracker({
           </section>
         ) : (
           <>
+            {/* Delivery Address & Order Request Form (#9) */}
+            {showRequestForm && (
+              <form
+                onSubmit={handleCreateDelivery}
+                className="delivery-form-card"
+                aria-labelledby="delivery-form-heading"
+              >
+                <h2 id="delivery-form-heading" className="delivery-form__title">
+                  Delivery Address &amp; Medication Details
+                </h2>
+                <p className="delivery-form__desc">
+                  Provide the destination address where our hospital pharmacy
+                  courier should deliver your medication.
+                </p>
+
+                {formError && (
+                  <p role="alert" className="tracking-error">
+                    {formError}
+                  </p>
+                )}
+
+                <div className="delivery-form__grid">
+                  <div className="delivery-field">
+                    <label htmlFor="delivery-med-select">
+                      Select Available Medicine *
+                    </label>
+                    <select
+                      id="delivery-med-select"
+                      value={selectedMedicineId}
+                      onChange={(e) => setSelectedMedicineId(e.target.value)}
+                      className="tracking-input"
+                    >
+                      {availableMedicines.map((med) => (
+                        <option key={med.id} value={med.id}>
+                          {med.name} ({med.strength}) — ${med.price.toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="delivery-field">
+                    <label htmlFor="delivery-qty-input">Quantity *</label>
+                    <input
+                      id="delivery-qty-input"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="tracking-input"
+                    />
+                  </div>
+
+                  <div className="delivery-field delivery-field--full">
+                    <label htmlFor="delivery-street-input">
+                      Street Address &amp; Apartment/Unit *
+                    </label>
+                    <input
+                      id="delivery-street-input"
+                      type="text"
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      placeholder="e.g., 742 Evergreen Terrace, Apt 4B"
+                      className="tracking-input"
+                    />
+                  </div>
+
+                  <div className="delivery-field">
+                    <label htmlFor="delivery-city-input">
+                      City, State &amp; ZIP Code *
+                    </label>
+                    <input
+                      id="delivery-city-input"
+                      type="text"
+                      value={cityStateZip}
+                      onChange={(e) => setCityStateZip(e.target.value)}
+                      placeholder="e.g., Nacogdoches, TX 75961"
+                      className="tracking-input"
+                    />
+                  </div>
+
+                  <div className="delivery-field">
+                    <label htmlFor="delivery-phone-input">
+                      Contact Phone Number *
+                    </label>
+                    <input
+                      id="delivery-phone-input"
+                      type="tel"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="e.g., +1-936-555-0148"
+                      className="tracking-input"
+                    />
+                  </div>
+
+                  <div className="delivery-field delivery-field--full">
+                    <label htmlFor="delivery-notes-input">
+                      Courier Instructions / Gate Code (Optional)
+                    </label>
+                    <input
+                      id="delivery-notes-input"
+                      type="text"
+                      value={deliveryNotes}
+                      onChange={(e) => setDeliveryNotes(e.target.value)}
+                      placeholder="e.g., Leave at front desk or ring doorbell"
+                      className="tracking-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="delivery-form__actions">
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestForm(false)}
+                    className="tracking-secondary-btn"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="tracking-submit-btn">
+                    Submit Delivery Request
+                  </button>
+                </div>
+              </form>
+            )}
+
             {/* Reference Lookup Form */}
             <form onSubmit={handleLookup} className="tracking-lookup">
               <label htmlFor="delivery-ref-input" className="sr-only">
@@ -352,6 +618,14 @@ export function DeliveryTracker({
           margin-bottom: 1.5rem;
         }
 
+        .tracking-header__row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
         .tracking-eyebrow {
           margin: 0 0 0.4rem;
           color: var(--color-primary);
@@ -367,7 +641,7 @@ export function DeliveryTracker({
         }
 
         .tracking-subtitle {
-          max-width: 640px;
+          max-width: 620px;
           margin: 0.6rem 0 0;
           color: var(--color-muted);
           font-size: 1rem;
@@ -408,6 +682,67 @@ export function DeliveryTracker({
           font-size: 0.88rem;
           font-weight: 600;
           font-family: inherit;
+        }
+
+        .tracking-success {
+          margin: 0 0 1.15rem;
+          padding: 0.85rem 1rem;
+          border-radius: 12px;
+          background: var(--color-primary-soft);
+          border: 1px solid var(--color-primary);
+          color: var(--color-primary);
+          font-size: 0.92rem;
+          font-weight: 700;
+        }
+
+        .delivery-form-card {
+          padding: clamp(1.25rem, 3vw, 1.75rem);
+          margin-bottom: 1.35rem;
+          background: #ffffff;
+          border: 2px solid var(--color-primary);
+          border-radius: 16px;
+          box-shadow: 0 6px 18px rgba(31, 111, 67, 0.08);
+        }
+
+        .delivery-form__title {
+          margin: 0;
+          font-size: 1.25rem;
+        }
+
+        .delivery-form__desc {
+          margin: 0.35rem 0 1.1rem;
+          font-size: 0.9rem;
+          color: var(--color-muted);
+        }
+
+        .delivery-form__grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+          gap: 0.95rem;
+        }
+
+        .delivery-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+
+        .delivery-field--full {
+          grid-column: 1 / -1;
+        }
+
+        .delivery-field label {
+          font-size: 0.84rem;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .delivery-form__actions {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          margin-top: 1.25rem;
         }
 
         .access-denied-card {
@@ -492,7 +827,7 @@ export function DeliveryTracker({
         }
 
         .tracking-error {
-          margin: 0.75rem 0 0;
+          margin: 0.75rem 0;
           padding: 0.75rem 1rem;
           border-radius: 10px;
           background: #fee2e2;

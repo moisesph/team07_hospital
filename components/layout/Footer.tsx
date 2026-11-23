@@ -57,6 +57,7 @@ export default async function Footer() {
               <Link href="/">Home</Link>
               <Link href="/specialists">Specialists</Link>
               <Link href="/appointments">Appointments</Link>
+              <Link href="/medicines">Medicines</Link>
             </nav>
           </div>
 

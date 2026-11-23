@@ -116,3 +116,33 @@ export interface BookingRequest {
   submittedAt: string;
   status: BookingRequestStatus;
 }
+
+export type MedicineCategory =
+  | "Pain & Fever"
+  | "Antibiotics"
+  | "Allergy & Sinus"
+  | "Cardiovascular"
+  | "Respiratory"
+  | "Digestive Health";
+
+export interface Medicine {
+  id: string;
+  hospitalId: string;
+  name: string;
+  genericName: string;
+  strength: string;
+  form: string;
+  category: MedicineCategory;
+  description: string;
+  price: number;
+  available: boolean;
+  stockCount: number;
+  rxRequired: boolean;
+}
+
+export interface MedicineFilters {
+  hospitalId?: string | null;
+  category?: string | null;
+  query?: string | null;
+  availableOnly?: boolean;
+}

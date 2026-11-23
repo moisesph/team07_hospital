@@ -31,6 +31,11 @@ const navigationItems = [
     icon: null,
   },
   {
+    label: "Medicines",
+    href: "/medicines",
+    icon: null,
+  },
+  {
     label: "Orders",
     href: "/orders",
     icon: "delivery",

@@ -29,14 +29,14 @@ hospitals through `hospitalId`. Existing appointments continue to reference
 patients through `patientId`; appointment records have not been linked to
 specialists.
 
-Specialist, hospital, patient, and appointment examples are stored in typed,
-private in-memory arrays in `lib/`. They are deterministic development data,
-not a database, and are not persistent.
+Hospitals, specialists, patients, and appointments are stored in PostgreSQL.
+The checked-in seed data is fictional test data only. Specialist pages and
+the `/api/specialists` endpoints read from the database.
 
 The patient pages remain coming-soon scaffolding, the patient API returns
 `501`, and the retained patient component files have no implementation.
-`lib/patients.ts` continues to provide synthetic patient records and query
-functions, but those records are not exposed through the public pages or API.
+`lib/patients.ts` provides database query functions, but patient records are
+not exposed through the public pages or API.
 No authentication or authorization is implemented. Do not serve
 non-synthetic patient information from future public routes without
 appropriate access control.
@@ -63,8 +63,8 @@ and no provider or authentication flow has been selected.
 Authentication integration, registration, OAuth, sessions, and authorization
 belong to the authentication teammate. The panel contains a TODO for
 connecting the teammate's selected flow. Empty `app/api/auth/` and `lib/auth/`
-directories are reserved for that future work. No authentication behavior,
-dependency, or database integration has been added.
+directories are reserved for that future work. No authentication behavior has
+been added.
 
 ## Appointment UI Placeholders and Retained Demo API
 
@@ -80,29 +80,28 @@ The backend demo endpoints and services are retained but are not connected to
 this placeholder UI:
 
 - `POST /api/appointments` validates and records a demo `BookingRequest`.
-- `GET /api/appointments/availability` returns mock availability slots.
+- `GET /api/appointments/availability` returns demo availability slots and
+  checks unresolved requests stored in PostgreSQL.
 - `GET /api/appointments` does not expose appointment records; it returns
   HTTP `501`.
 
 The POST path still uses the shared request schema, server-side mock identity,
 hospital/specialist/slot validation, current-time checking, availability
 rechecking, and idempotency handling. It derives requester ownership from the
-server identity rather than client input. Its in-memory repository is
-temporary, can reset on restart, is not reliably shared across instances, and
-does not guarantee production persistence or concurrency safety. It creates
-only unresolved `BookingRequest` records; no real appointment is reserved and
-no notification is sent.
+server identity rather than client input. Unresolved `BookingRequest` records
+are stored persistently in PostgreSQL with unique slot and idempotency
+constraints. This remains a demo intake flow; no real appointment is reserved
+and no notification is sent.
 
 The server-only `BOOKING_DEMO_IDENTITY` setting accepts `guest`, `signed-in`,
 or `signed-in-incomplete` for direct development/testing of the retained API.
 It defaults to `signed-in`. There is no public impersonation control, real
 session, or account-to-patient matching by email. The authentication teammate
 replaces `bookingIdentityProvider` in `lib/booking/services.ts` with a trusted
-session provider. Guest contact verification, persistent storage, atomic
-availability/reservation handling, database constraints against double
-booking, and server-side abuse controls remain future production work. A
-verified request must be explicitly resolved to the correct patient before
-becoming an `Appointment`; no patient is selected by matching email.
+session provider. Guest contact verification, atomic appointment reservation,
+and server-side abuse controls remain future production work. A verified
+request must be explicitly resolved to the correct patient before becoming an
+`Appointment`; no patient is selected by matching email.
 
 ## Getting Started
 
@@ -121,6 +120,37 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+## Database Setup
+
+The application uses the Neon PostgreSQL database connected to the Vercel
+project. Configure `DATABASE_URL` in the Vercel project's Development,
+Preview, and Production environments. Use Neon’s pooled connection string for
+the application. Never commit or share the connection string.
+
+For local development, link the repository to the Vercel project if needed,
+then pull its environment variables:
+
+```bash
+npx vercel link
+npx vercel env pull .env.local
+```
+
+`.env*` files are ignored by Git. After setting `DATABASE_URL`, initialize the
+schema and load fictional sample records:
+
+```bash
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+The migration command is safe to rerun and records applied migration files in
+`schema_migrations`. The seed command is also safe to rerun: existing rows
+with the same IDs are left unchanged. Only the fictional example hospitals,
+specialists, patients, and appointments are seeded. Apply migrations in each
+deployed environment before serving the app; do not seed production with
+non-test or real patient records.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

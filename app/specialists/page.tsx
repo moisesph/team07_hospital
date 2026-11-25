@@ -1,8 +1,8 @@
 import SpecialistList from "../../components/specialists/SpecialistList";
-import { getSpecialists } from "../../lib/specialists";
+import { getSpecialistsWithHospitals } from "../../lib/specialists";
 
-export default function SpecialistsPage() {
-  const specialists = getSpecialists();
+export default async function SpecialistsPage() {
+  const specialists = await getSpecialistsWithHospitals();
 
   return (
     <>

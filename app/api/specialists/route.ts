@@ -1,11 +1,10 @@
-import { getHospitalById } from "../../../lib/hospitals-db";
-import { getSpecialists } from "../../../lib/specialists";
+import { getSpecialistsWithHospitals } from "../../../lib/specialists";
 
-export function GET() {
-  const specialists = getSpecialists().map((specialist) => ({
+export async function GET() {
+  const rows = await getSpecialistsWithHospitals();
+  const specialists = rows.map(({ hospital, ...specialist }) => ({
     ...specialist,
-    hospital: getHospitalById(specialist.hospitalId),
+    hospital,
   }));
-
   return Response.json({ specialists });
 }

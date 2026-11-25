@@ -1,59 +1,55 @@
 import type { Hospital } from "./types";
+import { getDb } from "./db";
 
-const hospitals: Hospital[] = [
-  {
-    id: "hospital-001",
-    name: "Green Valley Teaching Hospital",
-    description:
-      "Fictitious general hospital used for development and interface testing.",
-    location: {
-      address: "101 Demo Health Avenue",
-      city: "North Example City",
-      region: "Development District",
-      country: "Fictional Territory",
-    },
-  },
-  {
-    id: "hospital-002",
-    name: "Sunrise Community Medical Center",
-    description:
-      "Fictitious community medical center used for sample patient and appointment data.",
-    location: {
-      address: "202 Prototype Boulevard",
-      city: "East Example City",
-      region: "Testing District",
-      country: "Fictional Territory",
-    },
-  },
-  {
-    id: "hospital-003",
-    name: "Riverside Family Hospital",
-    description:
-      "Fictitious family hospital created for development, search, and form testing.",
-    location: {
-      address: "303 Mock River Road",
-      city: "South Example City",
-      region: "Sandbox District",
-      country: "Fictional Territory",
-    },
-  },
-];
+interface HospitalRow {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  region: string;
+  country: string;
+}
 
-function cloneHospital(hospital: Hospital): Hospital {
+function mapHospital(row: HospitalRow): Hospital {
   return {
-    ...hospital,
+    id: row.id,
+    name: row.name,
+    description: row.description,
     location: {
-      ...hospital.location,
+      address: row.address,
+      city: row.city,
+      region: row.region,
+      country: row.country,
     },
   };
 }
 
-export function getHospitals(): Hospital[] {
-  return hospitals.map(cloneHospital);
+const hospitalColumns = `
+  id, name, description, address, city, region, country
+`;
+
+export async function getHospitals(): Promise<Hospital[]> {
+  const rows = await getDb().query<HospitalRow>(
+    `SELECT ${hospitalColumns} FROM hospitals ORDER BY id`,
+  );
+  return rows.map(mapHospital);
 }
 
-export function getHospitalById(id: string): Hospital | null {
-  const hospital = hospitals.find((record) => record.id === id);
+export async function getHospitalById(id: string): Promise<Hospital | null> {
+  const rows = await getDb().query<HospitalRow>(
+    `SELECT ${hospitalColumns} FROM hospitals WHERE id = $1 LIMIT 1`,
+    [id],
+  );
+  return rows[0] ? mapHospital(rows[0]) : null;
+}
 
-  return hospital ? cloneHospital(hospital) : null;
+export async function getHospitalTimeZone(
+  id: string,
+): Promise<string | null> {
+  const rows = await getDb().query<{ time_zone: string }>(
+    "SELECT time_zone FROM hospitals WHERE id = $1 LIMIT 1",
+    [id],
+  );
+  return rows[0]?.time_zone ?? null;
 }

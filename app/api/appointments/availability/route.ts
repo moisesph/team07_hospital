@@ -1,7 +1,7 @@
 import { getAvailableBookingSlots } from "../../../../lib/booking/services";
 import { isValidIsoDate } from "../../../../lib/booking/schema";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const hospitalId = searchParams.get("hospitalId") ?? "";
   const specialistId = searchParams.get("specialistId") ?? "";
@@ -25,7 +25,7 @@ export function GET(request: Request) {
     );
   }
 
-  const result = getAvailableBookingSlots({
+  const result = await getAvailableBookingSlots({
     hospitalId,
     specialistId,
     date,

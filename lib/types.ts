@@ -116,3 +116,70 @@ export interface BookingRequest {
   submittedAt: string;
   status: BookingRequestStatus;
 }
+
+export type MedicineCategory =
+  | "Pain & Fever"
+  | "Antibiotics"
+  | "Allergy & Sinus"
+  | "Cardiovascular"
+  | "Respiratory"
+  | "Digestive Health";
+
+export interface Medicine {
+  id: string;
+  hospitalId: string;
+  name: string;
+  genericName: string;
+  strength: string;
+  form: string;
+  category: MedicineCategory;
+  description: string;
+  price: number;
+  available: boolean;
+  stockCount: number;
+  rxRequired: boolean;
+}
+
+export interface MedicineFilters {
+  hospitalId?: string | null;
+  category?: string | null;
+  query?: string | null;
+  availableOnly?: boolean;
+}
+
+export type DeliveryStatus =
+  | "awaiting_confirmation"
+  | "confirmed"
+  | "preparing"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled";
+
+export interface DeliveryItem {
+  medicineId: string;
+  medicineName: string;
+  strength: string;
+  quantity: number;
+}
+
+export interface DeliveryTimelineStep {
+  status: DeliveryStatus;
+  label: string;
+  timestamp: string | null;
+  completed: boolean;
+}
+
+export interface DeliveryRequest {
+  id: string;
+  referenceCode: string;
+  patientId: string;
+  hospitalId: string;
+  items: DeliveryItem[];
+  deliveryAddress: string;
+  contactPhone: string;
+  notes: string | null;
+  status: DeliveryStatus;
+  estimatedDelivery: string;
+  createdAt: string;
+  timeline: DeliveryTimelineStep[];
+}

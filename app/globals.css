@@ -29,6 +29,8 @@
 }
 
 /* Tailwind utilities can override these defaults. */
+@import "tailwindcss";
+
 @layer base {
   *,
   *::before,

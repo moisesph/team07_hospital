@@ -89,6 +89,33 @@ export interface BookingSlot {
   startsAt: string;
 }
 
+export type AvailabilitySlotStatus =
+  | "available"
+  | "booked"
+  | "blocked"
+  | "past";
+
+export interface AvailabilitySlot {
+  id: string;
+  doctorId: string;
+  date: string;
+  startTime: string;
+  startsAt: string;
+  durationMinutes: number;
+  timeZone: string;
+  status: AvailabilitySlotStatus;
+  available: boolean;
+}
+
+export interface DoctorAvailability {
+  doctorId: string;
+  schedulingTimeZone: string;
+  from: string;
+  to: string;
+  slots: AvailabilitySlot[];
+  source?: "mock" | "database";
+}
+
 export type BookingRequestStatus = "unresolved";
 
 export type BookingRequester =

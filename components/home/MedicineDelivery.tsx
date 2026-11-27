@@ -64,19 +64,23 @@ export default function MedicineDelivery() {
         <div className="medicine-delivery__content">
           <SectionHeading
             className="medicine-delivery__heading"
-            eyebrow="Future service"
-            title="Medicine Delivery"
-            description="A dedicated portal for medicine delivery requests is being prepared to make future order access clear and convenient."
+            eyebrow="Pharmacy & Delivery"
+            title="Medicine Catalog & Home Delivery"
+            description="Browse available medications by hospital location, submit your home delivery address, and follow live pharmacy fulfillment updates."
             id="medicine-delivery-title"
           />
 
           <p className="medicine-delivery__note">
-            Online ordering and delivery tracking are coming soon.
+            Online medication browsing, home delivery requests, and real-time
+            status tracking are active for registered patients.
           </p>
 
           <div className="medicine-delivery__action">
-            <ButtonLink href="/orders" variant="primary">
-              Request Delivery
+            <ButtonLink href="/medicines" variant="primary">
+              Browse Medicines
+            </ButtonLink>
+            <ButtonLink href="/delivery-tracking" variant="secondary">
+              Track Delivery Status
             </ButtonLink>
           </div>
         </div>
@@ -125,6 +129,9 @@ export default function MedicineDelivery() {
 
         .medicine-delivery__action {
           margin-top: 1.25rem;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
         }
 
         .medicine-delivery__visual {

@@ -8,10 +8,17 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:seed": "node scripts/db-seed.mjs"
+    "db:seed": "node scripts/db-seed.mjs",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:prisma:migrate": "prisma migrate dev",
+    "db:prisma:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",
+    "@prisma/adapter-neon": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "dotenv": "^18.0.10",
     "next": "16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -25,7 +32,9 @@
     "eslint-config-next": "16.4.5",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
+    "prisma": "^7.10.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

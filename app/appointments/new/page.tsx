@@ -1,7 +1,65 @@
-import AppointmentForm from "../../../components/appointments/AppointmentForm";
-import { ButtonStyles } from "../../../components/ui/Button";
+import { Suspense } from "react";
 
-export default function NewAppointmentPage() {
+import AppointmentForm from "../../../components/appointments/AppointmentForm";
+import AvailabilityPicker from "../../../components/availability/AvailabilityPicker";
+import { ButtonLink, ButtonStyles } from "../../../components/ui/Button";
+import { isValidIsoDate } from "../../../lib/booking/schema";
+import { getSpecialistById } from "../../../lib/specialists";
+
+interface NewAppointmentPageProps {
+  searchParams: Promise<{
+    specialistId?: string | string[];
+    date?: string | string[];
+    slotId?: string | string[];
+  }>;
+}
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
+async function AppointmentTimeSelection({
+  searchParams,
+}: NewAppointmentPageProps) {
+  const query = await searchParams;
+  const specialistId = firstValue(query.specialistId);
+  const date = firstValue(query.date);
+  const slotId = firstValue(query.slotId);
+  const specialist = specialistId ? await getSpecialistById(specialistId) : null;
+
+  return (
+    <>
+      <p className="new-appointment-page__description">
+        {specialist
+          ? `Review available times for ${specialist.name} and choose a slot. Request submission is coming soon.`
+          : "Choose a specialist and select an available time. Request submission is coming soon."}
+      </p>
+
+      {specialist ? (
+        <div className="mt-6">
+          <AvailabilityPicker
+            doctorId={specialist.id}
+            initialDate={isValidIsoDate(date) ? date : undefined}
+            initialSlotId={slotId || undefined}
+          />
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-600">
+            Select a specialist to see their available appointment times.
+          </p>
+          <ButtonLink href="/specialists" variant="primary">
+            Browse specialists
+          </ButtonLink>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function NewAppointmentPage({
+  searchParams,
+}: NewAppointmentPageProps) {
   return (
     <>
       <div className="new-appointment-page">
@@ -9,12 +67,21 @@ export default function NewAppointmentPage() {
           <header className="new-appointment-page__header">
             <p className="new-appointment-page__eyebrow">Patient services</p>
             <h1 id="new-appointment-title">Request an appointment</h1>
-            <p className="new-appointment-page__description">
-              The appointment request form is not available yet.
-            </p>
+
+            <Suspense
+              fallback={
+                <p className="new-appointment-page__description">
+                  Loading appointment times…
+                </p>
+              }
+            >
+              <AppointmentTimeSelection searchParams={searchParams} />
+            </Suspense>
           </header>
 
-          <AppointmentForm />
+          <div className="mt-6">
+            <AppointmentForm />
+          </div>
         </section>
       </div>
 

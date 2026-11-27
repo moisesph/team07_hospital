@@ -12,12 +12,18 @@ export default function AppointmentsPage() {
           <p className="appointments-page__eyebrow">Patient services</p>
           <h1 id="appointments-page-title">Appointments</h1>
           <p className="appointments-page__description">
-            The appointment request form and personal appointment history are
-            not available yet.
+            Browse specialists to view their available appointment times and
+            choose a slot. Request submission and personal appointment history
+            are coming soon.
           </p>
-          <ButtonLink href="/appointments/new" variant="primary">
-            View request form placeholder
-          </ButtonLink>
+          <div className="appointments-page__actions">
+            <ButtonLink href="/specialists" variant="primary">
+              Browse specialists
+            </ButtonLink>
+            <ButtonLink href="/appointments/new" variant="secondary">
+              View time selection
+            </ButtonLink>
+          </div>
         </section>
         <AppointmentList />
       </div>
@@ -57,6 +63,12 @@ export default function AppointmentsPage() {
           margin: 0.75rem 0 1.5rem;
           color: var(--color-muted);
           line-height: 1.7;
+        }
+
+        .appointments-page__actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
         }
 
         @media (max-width: 600px) {

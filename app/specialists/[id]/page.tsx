@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
+import DoctorAvailabilityPanel from "../../../components/availability/DoctorAvailabilityPanel";
 import SpecialistDetail from "../../../components/specialists/SpecialistDetail";
 import { getHospitalById } from "../../../lib/hospitals-db";
 import { getSpecialistById } from "../../../lib/specialists";
@@ -22,10 +23,17 @@ async function SpecialistProfile({
   const hospital = await getHospitalById(specialist.hospitalId);
 
   return (
-    <SpecialistDetail
-      hospital={hospital}
-      specialist={specialist}
-    />
+    <>
+      <SpecialistDetail
+        hospital={hospital}
+        specialist={specialist}
+      />
+
+      <DoctorAvailabilityPanel
+        doctorId={specialist.id}
+        doctorName={specialist.name}
+      />
+    </>
   );
 }
 

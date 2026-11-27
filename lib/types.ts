@@ -89,6 +89,33 @@ export interface BookingSlot {
   startsAt: string;
 }
 
+export type AvailabilitySlotStatus =
+  | "available"
+  | "booked"
+  | "blocked"
+  | "past";
+
+export interface AvailabilitySlot {
+  id: string;
+  doctorId: string;
+  date: string;
+  startTime: string;
+  startsAt: string;
+  durationMinutes: number;
+  timeZone: string;
+  status: AvailabilitySlotStatus;
+  available: boolean;
+}
+
+export interface DoctorAvailability {
+  doctorId: string;
+  schedulingTimeZone: string;
+  from: string;
+  to: string;
+  slots: AvailabilitySlot[];
+  source?: "mock" | "database";
+}
+
 export type BookingRequestStatus = "unresolved";
 
 export type BookingRequester =
@@ -115,4 +142,71 @@ export interface BookingRequest {
   reason: string | null;
   submittedAt: string;
   status: BookingRequestStatus;
+}
+
+export type MedicineCategory =
+  | "Pain & Fever"
+  | "Antibiotics"
+  | "Allergy & Sinus"
+  | "Cardiovascular"
+  | "Respiratory"
+  | "Digestive Health";
+
+export interface Medicine {
+  id: string;
+  hospitalId: string;
+  name: string;
+  genericName: string;
+  strength: string;
+  form: string;
+  category: MedicineCategory;
+  description: string;
+  price: number;
+  available: boolean;
+  stockCount: number;
+  rxRequired: boolean;
+}
+
+export interface MedicineFilters {
+  hospitalId?: string | null;
+  category?: string | null;
+  query?: string | null;
+  availableOnly?: boolean;
+}
+
+export type DeliveryStatus =
+  | "awaiting_confirmation"
+  | "confirmed"
+  | "preparing"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled";
+
+export interface DeliveryItem {
+  medicineId: string;
+  medicineName: string;
+  strength: string;
+  quantity: number;
+}
+
+export interface DeliveryTimelineStep {
+  status: DeliveryStatus;
+  label: string;
+  timestamp: string | null;
+  completed: boolean;
+}
+
+export interface DeliveryRequest {
+  id: string;
+  referenceCode: string;
+  patientId: string;
+  hospitalId: string;
+  items: DeliveryItem[];
+  deliveryAddress: string;
+  contactPhone: string;
+  notes: string | null;
+  status: DeliveryStatus;
+  estimatedDelivery: string;
+  createdAt: string;
+  timeline: DeliveryTimelineStep[];
 }

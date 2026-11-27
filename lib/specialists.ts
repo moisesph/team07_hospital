@@ -1,68 +1,104 @@
-import type { Specialist } from "./types";
+import type { Hospital, Specialist } from "./types";
+import { getDb } from "./db";
 
-const specialists: Specialist[] = [
-  {
-    id: "specialist-001",
-    name: "Dr. Elena Morris",
-    specialty: "Dentistry",
-    hospitalId: "hospital-001",
-  },
-  {
-    id: "specialist-002",
-    name: "Jordan Ellis, DPT",
-    specialty: "Physiotherapy",
-    hospitalId: "hospital-002",
-  },
-  {
-    id: "specialist-003",
-    name: "Dr. Priya Raman",
-    specialty: "General Medicine",
-    hospitalId: "hospital-001",
-  },
-  {
-    id: "specialist-004",
-    name: "Dr. Samuel Ortiz",
-    specialty: "Cardiology",
-    hospitalId: "hospital-003",
-  },
-  {
-    id: "specialist-005",
-    name: "Dr. Lila Chen",
-    specialty: "Pediatrics",
-    hospitalId: "hospital-002",
-  },
-  {
-    id: "specialist-006",
-    name: "Dr. Amara Okafor",
-    specialty: "Dermatology",
-    hospitalId: "hospital-003",
-  },
-];
-
-function cloneSpecialist(specialist: Specialist): Specialist {
-  return { ...specialist };
+interface SpecialistRow {
+  id: string;
+  name: string;
+  specialty: string;
+  hospital_id: string;
 }
+
+function mapSpecialist(row: SpecialistRow): Specialist {
+  return {
+    id: row.id,
+    name: row.name,
+    specialty: row.specialty,
+    hospitalId: row.hospital_id,
+  };
+}
+
+interface SpecialistWithHospitalRow extends SpecialistRow {
+  hospital_name: string;
+  hospital_description: string;
+  hospital_address: string;
+  hospital_city: string;
+  hospital_region: string;
+  hospital_country: string;
+}
+
+export interface SpecialistWithHospital extends Specialist {
+  hospital: Hospital;
+}
+
+function mapSpecialistWithHospital(
+  row: SpecialistWithHospitalRow,
+): SpecialistWithHospital {
+  return {
+    ...mapSpecialist(row),
+    hospital: {
+      id: row.hospital_id,
+      name: row.hospital_name,
+      description: row.hospital_description,
+      location: {
+        address: row.hospital_address,
+        city: row.hospital_city,
+        region: row.hospital_region,
+        country: row.hospital_country,
+      },
+    },
+  };
+}
+
+const specialistWithHospitalColumns = `
+  s.id, s.name, s.specialty, s.hospital_id,
+  h.name AS hospital_name, h.description AS hospital_description,
+  h.address AS hospital_address, h.city AS hospital_city,
+  h.region AS hospital_region, h.country AS hospital_country
+`;
 
 export function isValidSpecialistId(id: string): boolean {
   return /^specialist-\d{3}$/.test(id);
 }
 
-export function getSpecialists(): Specialist[] {
-  return specialists.map(cloneSpecialist);
+export async function getSpecialistsWithHospitals(): Promise<
+  SpecialistWithHospital[]
+> {
+  const rows = await getDb().query<SpecialistWithHospitalRow>(
+    `SELECT ${specialistWithHospitalColumns}
+     FROM specialists s
+     JOIN hospitals h ON h.id = s.hospital_id
+     ORDER BY s.id`,
+  );
+  return rows.map(mapSpecialistWithHospital);
 }
 
-export function getSpecialistById(id: string): Specialist | null {
-  const specialist = specialists.find((record) => record.id === id);
-
-  return specialist ? cloneSpecialist(specialist) : null;
+export async function getSpecialists(): Promise<Specialist[]> {
+  const rows = await getDb().query<SpecialistRow>(
+    "SELECT id, name, specialty, hospital_id FROM specialists ORDER BY id",
+  );
+  return rows.map(mapSpecialist);
 }
 
-export function getSpecialistsByHospital(
+export async function getSpecialistById(
+  id: string,
+): Promise<Specialist | null> {
+  const rows = await getDb().query<SpecialistRow>(
+    "SELECT id, name, specialty, hospital_id FROM specialists WHERE id = $1 LIMIT 1",
+    [id],
+  );
+  return rows[0] ? mapSpecialist(rows[0]) : null;
+}
+
+export async function getSpecialistsByHospital(
   hospitalId?: string | null,
-): Specialist[] {
-  const matchingSpecialists = hospitalId
-    ? specialists.filter((specialist) => specialist.hospitalId === hospitalId)
-    : specialists;
-
-  return matchingSpecialists.map(cloneSpecialist);
+): Promise<Specialist[]> {
+  const rows = hospitalId
+    ? await getDb().query<SpecialistRow>(
+        "SELECT id, name, specialty, hospital_id FROM specialists WHERE hospital_id = $1 ORDER BY id",
+        [hospitalId],
+      )
+    : await getDb().query<SpecialistRow>(
+        "SELECT id, name, specialty, hospital_id FROM specialists ORDER BY id",
+      );
+  return rows.map(mapSpecialist);
 }

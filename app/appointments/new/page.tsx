@@ -25,7 +25,7 @@ async function AppointmentTimeSelection({
   const specialistId = firstValue(query.specialistId);
   const date = firstValue(query.date);
   const slotId = firstValue(query.slotId);
-  const specialist = specialistId ? getSpecialistById(specialistId) : null;
+  const specialist = specialistId ? await getSpecialistById(specialistId) : null;
 
   return (
     <>

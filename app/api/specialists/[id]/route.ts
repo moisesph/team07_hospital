@@ -21,7 +21,7 @@ export async function GET(
     );
   }
 
-  const specialist = getSpecialistById(id);
+  const specialist = await getSpecialistById(id);
 
   if (!specialist) {
     return Response.json(
@@ -30,10 +30,12 @@ export async function GET(
     );
   }
 
+  const hospital = await getHospitalById(specialist.hospitalId);
+
   return Response.json({
     specialist: {
       ...specialist,
-      hospital: getHospitalById(specialist.hospitalId),
+      hospital,
     },
   });
 }

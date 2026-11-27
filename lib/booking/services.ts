@@ -2,7 +2,11 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import { getHospitalById } from "../hospitals-db";
+import { getDb } from "../db";
+import {
+  getHospitalById,
+  getHospitalTimeZone,
+} from "../hospitals-db";
 import { getPatientById } from "../patients";
 import { getSpecialistById } from "../specialists";
 import type {
@@ -89,68 +93,69 @@ export type RepositoryCreateResult =
   | { kind: "idempotency-conflict" };
 
 export interface BookingRequestRepository {
-  hasSlotRequest(slotId: string): boolean;
+  hasSlotRequest(slotId: string): Promise<boolean>;
   lookupIdempotency(
     requester: BookingRequest["requester"],
     idempotencyKey: string,
     fingerprint: string,
-  ): RepositoryCreateResult | null;
+  ): Promise<RepositoryCreateResult | null>;
   create(
     request: BookingRequestDraft,
     idempotencyKey: string,
     fingerprint: string,
-  ): RepositoryCreateResult;
+  ): Promise<RepositoryCreateResult>;
 }
 
-export class MockBookingRequestRepository
+function requesterScope(requester: BookingRequest["requester"]): string {
+  return requester.kind === "authenticated"
+    ? `authenticated:${requester.subjectId}`
+    : "guest";
+}
+
+export class PostgresBookingRequestRepository
   implements BookingRequestRepository
 {
-  private readonly requests: BookingRequest[] = [];
-  private readonly idempotencyEntries = new Map<
-    string,
-    { fingerprint: string; requestId: string }
-  >();
-
-  hasSlotRequest(slotId: string): boolean {
-    return this.requests.some(
-      (request) =>
-        request.slot.id === slotId && request.status === "unresolved",
+  async hasSlotRequest(slotId: string): Promise<boolean> {
+    const rows = await getDb().query<{ exists: boolean }>(
+      "SELECT EXISTS (SELECT 1 FROM booking_requests WHERE slot_id = $1 AND status = 'unresolved') AS exists",
+      [slotId],
     );
+    return rows[0]?.exists ?? false;
   }
 
-  lookupIdempotency(
+  async lookupIdempotency(
     requester: BookingRequest["requester"],
     idempotencyKey: string,
     fingerprint: string,
-  ): RepositoryCreateResult | null {
-    const requesterScope =
-      requester.kind === "authenticated"
-        ? `authenticated:${requester.subjectId}`
-        : "guest";
-    const previous = this.idempotencyEntries.get(
-      `${requesterScope}:${idempotencyKey}`,
+  ): Promise<RepositoryCreateResult | null> {
+    const rows = await getDb().query<{
+      fingerprint: string;
+      request_id: string;
+    }>(
+      `SELECT fingerprint, id AS request_id
+       FROM booking_requests
+       WHERE requester_scope = $1 AND idempotency_key = $2
+       LIMIT 1`,
+      [requesterScope(requester), idempotencyKey],
     );
+    const previous = rows[0];
 
     if (!previous) {
       return null;
     }
 
     return previous.fingerprint === fingerprint
-      ? { kind: "replayed", requestId: previous.requestId }
+      ? { kind: "replayed", requestId: previous.request_id }
       : { kind: "idempotency-conflict" };
   }
 
-  create(
+  async create(
     request: BookingRequestDraft,
     idempotencyKey: string,
     fingerprint: string,
-  ): RepositoryCreateResult {
-    const requesterScope =
-      request.requester.kind === "authenticated"
-        ? `authenticated:${request.requester.subjectId}`
-        : "guest";
-    const scopedKey = `${requesterScope}:${idempotencyKey}`;
-    const previous = this.lookupIdempotency(
+  ): Promise<RepositoryCreateResult> {
+    const scope = requesterScope(request.requester);
+    const previous = await this.lookupIdempotency(
       request.requester,
       idempotencyKey,
       fingerprint,
@@ -160,36 +165,77 @@ export class MockBookingRequestRepository
       return previous;
     }
 
-    if (this.hasSlotRequest(request.slot.id)) {
-      return { kind: "slot-conflict" };
+    const requestId = randomUUID();
+    const rows = await getDb().query<{ id: string }>(
+      `INSERT INTO booking_requests (
+         id, requester_kind, requester_subject_id, patient_id, hospital_id,
+         specialist_id, slot_id, slot_date, slot_start_time, time_zone,
+         starts_at, contact_name, contact_email, contact_phone, reason,
+         submitted_at, status, requester_scope, idempotency_key, fingerprint
+       )
+       VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8::date, $9::time, $10,
+         $11::timestamptz, $12, $13, $14, $15, $16::timestamptz,
+         $17, $18, $19, $20
+       )
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [
+        requestId,
+        request.requester.kind,
+        request.requester.kind === "authenticated"
+          ? request.requester.subjectId
+          : null,
+        request.requester.kind === "authenticated"
+          ? request.requester.patientId
+          : null,
+        request.hospitalId,
+        request.specialistId,
+        request.slot.id,
+        request.slot.date,
+        request.slot.startTime,
+        request.slot.timeZone,
+        request.slot.startsAt,
+        request.contact.name,
+        request.contact.email,
+        request.contact.phone,
+        request.reason,
+        request.submittedAt,
+        request.status,
+        scope,
+        idempotencyKey,
+        fingerprint,
+      ],
+    );
+
+    if (rows[0]) {
+      return { kind: "created", requestId: rows[0].id };
     }
 
-    const requestId = randomUUID();
-    this.requests.push({ ...request, id: requestId });
-    this.idempotencyEntries.set(scopedKey, {
+    const concurrentRetry = await this.lookupIdempotency(
+      request.requester,
+      idempotencyKey,
       fingerprint,
-      requestId,
-    });
+    );
+    if (concurrentRetry) {
+      return concurrentRetry;
+    }
 
-    return { kind: "created", requestId };
+    return (await this.hasSlotRequest(request.slot.id))
+      ? { kind: "slot-conflict" }
+      : { kind: "idempotency-conflict" };
   }
 }
 
 export interface BookingAvailabilityService {
-  getSchedulingTimeZone(hospitalId: string): string | null;
-  listSlots(selection: SlotSelection): BookingSlot[];
-  isSlotAvailable(slot: BookingSlot, now: Date): boolean;
+  getSchedulingTimeZone(hospitalId: string): Promise<string | null>;
+  listSlots(selection: SlotSelection): Promise<BookingSlot[]>;
+  isSlotAvailable(slot: BookingSlot, now: Date): Promise<boolean>;
 }
-
-const mockTimeZones: Readonly<Record<string, string>> = {
-  "hospital-001": "UTC",
-  "hospital-002": "UTC",
-  "hospital-003": "UTC",
-};
 
 const mockSlotStartTimes = ["09:00", "10:30", "13:30", "15:00"] as const;
 
-export class MockBookingAvailabilityService
+export class DatabaseBookingAvailabilityService
   implements BookingAvailabilityService
 {
   constructor(
@@ -199,18 +245,16 @@ export class MockBookingAvailabilityService
     >,
   ) {}
 
-  getSchedulingTimeZone(hospitalId: string): string | null {
-    if (!getHospitalById(hospitalId)) {
-      return null;
-    }
-
-    return mockTimeZones[hospitalId] ?? null;
+  async getSchedulingTimeZone(hospitalId: string): Promise<string | null> {
+    return getHospitalTimeZone(hospitalId);
   }
 
-  listSlots(selection: SlotSelection): BookingSlot[] {
-    const hospital = getHospitalById(selection.hospitalId);
-    const specialist = getSpecialistById(selection.specialistId);
-    const timeZone = this.getSchedulingTimeZone(selection.hospitalId);
+  async listSlots(selection: SlotSelection): Promise<BookingSlot[]> {
+    const [hospital, specialist, timeZone] = await Promise.all([
+      getHospitalById(selection.hospitalId),
+      getSpecialistById(selection.specialistId),
+      this.getSchedulingTimeZone(selection.hospitalId),
+    ]);
 
     if (
       !hospital ||
@@ -239,19 +283,19 @@ export class MockBookingAvailabilityService
     }));
   }
 
-  isSlotAvailable(slot: BookingSlot, now: Date): boolean {
+  async isSlotAvailable(slot: BookingSlot, now: Date): Promise<boolean> {
     return (
       Date.parse(slot.startsAt) > now.getTime() &&
-      !this.repository.hasSlotRequest(slot.id)
+      !(await this.repository.hasSlotRequest(slot.id))
     );
   }
 }
 
-export const mockBookingRequestRepository =
-  new MockBookingRequestRepository();
+export const bookingRequestRepository =
+  new PostgresBookingRequestRepository();
 
-export const mockBookingAvailabilityService =
-  new MockBookingAvailabilityService(mockBookingRequestRepository);
+export const bookingAvailabilityService =
+  new DatabaseBookingAvailabilityService(bookingRequestRepository);
 
 export interface BookingServices {
   identityProvider: BookingIdentityProvider;
@@ -262,8 +306,8 @@ export interface BookingServices {
 
 const defaultBookingServices: BookingServices = {
   identityProvider: bookingIdentityProvider,
-  availabilityService: mockBookingAvailabilityService,
-  repository: mockBookingRequestRepository,
+  availabilityService: bookingAvailabilityService,
+  repository: bookingRequestRepository,
   clock: systemBookingClock,
 };
 
@@ -309,16 +353,16 @@ function formError(
   };
 }
 
-export function getAvailableBookingSlots(
+export async function getAvailableBookingSlots(
   selection: SlotSelection,
   services: Pick<BookingServices, "availabilityService" | "clock"> =
     defaultBookingServices,
-): AvailableSlotsResult | null {
-  const hospital = getHospitalById(selection.hospitalId);
-  const specialist = getSpecialistById(selection.specialistId);
-  const timeZone = services.availabilityService.getSchedulingTimeZone(
-    selection.hospitalId,
-  );
+): Promise<AvailableSlotsResult | null> {
+  const [hospital, specialist, timeZone] = await Promise.all([
+    getHospitalById(selection.hospitalId),
+    getSpecialistById(selection.specialistId),
+    services.availabilityService.getSchedulingTimeZone(selection.hospitalId),
+  ]);
 
   if (
     !hospital ||
@@ -331,11 +375,16 @@ export function getAvailableBookingSlots(
   }
 
   const now = services.clock.now();
-  const slots = services.availabilityService
-    .listSlots(selection)
-    .filter((slot) =>
-      services.availabilityService.isSlotAvailable(slot, now),
-    );
+  const candidates = await services.availabilityService.listSlots(selection);
+  const available = await Promise.all(
+    candidates.map(async (slot) => ({
+      slot,
+      available: await services.availabilityService.isSlotAvailable(slot, now),
+    })),
+  );
+  const slots = available
+    .filter(({ available: isAvailable }) => isAvailable)
+    .map(({ slot }) => slot);
 
   return { hospital, timeZone, slots };
 }
@@ -360,8 +409,10 @@ export async function submitBookingRequest(
 
   const identity = await services.identityProvider.getCurrentIdentity();
   const input = parsed.data;
-  const hospital = getHospitalById(input.hospitalId);
-  const specialist = getSpecialistById(input.specialistId);
+  const [hospital, specialist] = await Promise.all([
+    getHospitalById(input.hospitalId),
+    getSpecialistById(input.specialistId),
+  ]);
 
   if (!hospital) {
     return fieldError("hospitalId", "Choose a hospital in this network.");
@@ -380,7 +431,7 @@ export async function submitBookingRequest(
 
   let patientId: string | null = null;
   if (identity?.patientId) {
-    const patient = getPatientById(identity.patientId);
+    const patient = await getPatientById(identity.patientId);
     if (!patient) {
       throw new Error(
         "The trusted booking identity references an unknown patient.",
@@ -397,13 +448,12 @@ export async function submitBookingRequest(
     patientId = patient.id;
   }
 
-  const slot = services.availabilityService
-    .listSlots({
-      hospitalId: hospital.id,
-      specialistId: specialist.id,
-      date: input.date,
-    })
-    .find((candidate) => candidate.id === input.slotId);
+  const slots = await services.availabilityService.listSlots({
+    hospitalId: hospital.id,
+    specialistId: specialist.id,
+    date: input.date,
+  });
+  const slot = slots.find((candidate) => candidate.id === input.slotId);
 
   if (!slot) {
     return fieldError(
@@ -433,7 +483,7 @@ export async function submitBookingRequest(
     reason: input.reason || null,
   });
 
-  const previous = services.repository.lookupIdempotency(
+  const previous = await services.repository.lookupIdempotency(
     requester,
     idempotencyKey,
     fingerprint,
@@ -462,7 +512,7 @@ export async function submitBookingRequest(
     );
   }
 
-  if (!services.availabilityService.isSlotAvailable(slot, now)) {
+  if (!(await services.availabilityService.isSlotAvailable(slot, now))) {
     return fieldError(
       "slotId",
       "That demo slot is no longer available. Choose another slot.",
@@ -484,7 +534,7 @@ export async function submitBookingRequest(
     submittedAt: now.toISOString(),
     status: "unresolved",
   };
-  const result = services.repository.create(
+  const result = await services.repository.create(
     request,
     idempotencyKey,
     fingerprint,

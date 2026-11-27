@@ -33,7 +33,7 @@ function slotStart(dayOffset: number, time: (typeof slotTimes)[number]) {
 }
 
 async function main() {
-  const doctors = getSpecialists();
+  const doctors = await getSpecialists();
 
   for (const doctor of doctors) {
     await prisma.doctor.upsert({

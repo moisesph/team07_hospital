@@ -14,16 +14,18 @@ async function SpecialistProfile({
   params,
 }: SpecialistPageProps) {
   const { id } = await params;
-  const specialist = getSpecialistById(id);
+  const specialist = await getSpecialistById(id);
 
   if (!specialist) {
     notFound();
   }
 
+  const hospital = await getHospitalById(specialist.hospitalId);
+
   return (
     <>
       <SpecialistDetail
-        hospital={getHospitalById(specialist.hospitalId)}
+        hospital={hospital}
         specialist={specialist}
       />
 

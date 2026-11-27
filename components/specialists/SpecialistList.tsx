@@ -1,9 +1,8 @@
-import { getHospitalById } from "../../lib/hospitals-db";
-import type { Specialist } from "../../lib/types";
+import type { SpecialistWithHospital } from "../../lib/specialists";
 import SpecialistCard from "./SpecialistCard";
 
 interface SpecialistListProps {
-  specialists: Specialist[];
+  specialists: SpecialistWithHospital[];
 }
 
 export default function SpecialistList({
@@ -16,7 +15,7 @@ export default function SpecialistList({
           {specialists.map((specialist) => (
             <li className="specialist-list__item" key={specialist.id}>
               <SpecialistCard
-                hospital={getHospitalById(specialist.hospitalId)}
+                hospital={specialist.hospital}
                 specialist={specialist}
               />
             </li>

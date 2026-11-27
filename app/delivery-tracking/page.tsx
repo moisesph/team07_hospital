@@ -4,10 +4,12 @@ import { getHospitals } from "../../lib/hospitals-db";
 import { getMedicines } from "../../lib/medicines";
 import { getPatients } from "../../lib/patients";
 
-export default function DeliveryTrackingPage() {
-  const deliveries = getAllDeliveryRequests();
-  const hospitals = getHospitals();
-  const patients = getPatients();
+export default async function DeliveryTrackingPage() {
+  const [deliveries, hospitals, patients] = await Promise.all([
+    getAllDeliveryRequests(),
+    getHospitals(),
+    getPatients(),
+  ]);
   const medicines = getMedicines();
 
   return (

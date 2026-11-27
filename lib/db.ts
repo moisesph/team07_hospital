@@ -1,8 +1,9 @@
 import "server-only";
 
+import { neon } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
-import { mockBookingAvailabilityService } from "./booking/services";
+import { bookingAvailabilityService } from "./booking/services";
 import { PrismaClient } from "./generated/prisma/client";
 import { getSpecialistById } from "./specialists";
 import type {
@@ -10,6 +11,40 @@ import type {
   AvailabilitySlotStatus,
   DoctorAvailability,
 } from "./types";
+
+interface DatabaseClient {
+  query<Row = Record<string, unknown>>(
+    statement: string,
+    parameters?: unknown[],
+  ): Promise<Row[]>;
+}
+
+let client: DatabaseClient | undefined;
+
+export function getDb(): DatabaseClient {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is required. Configure it in your local environment or Vercel project settings.",
+    );
+  }
+
+  if (!client) {
+    const neonClient = neon(connectionString);
+    client = {
+      async query<Row>(
+        statement: string,
+        parameters?: unknown[],
+      ): Promise<Row[]> {
+        return (await neonClient.query(statement, parameters)) as Row[];
+      },
+    };
+    return client;
+  }
+
+  return client;
+}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -55,12 +90,12 @@ interface MockAvailabilityQuery {
   to: string;
 }
 
-export function getMockDoctorAvailability({
+export async function getMockDoctorAvailability({
   doctorId,
   from,
   to,
-}: MockAvailabilityQuery): DoctorAvailability | null {
-  const specialist = getSpecialistById(doctorId);
+}: MockAvailabilityQuery): Promise<DoctorAvailability | null> {
+  const specialist = await getSpecialistById(doctorId);
 
   if (!specialist) {
     return null;
@@ -73,7 +108,7 @@ export function getMockDoctorAvailability({
 
   while (cursor <= end) {
     const date = cursor.toISOString().slice(0, 10);
-    const times = mockBookingAvailabilityService.listSlots({
+    const times = await bookingAvailabilityService.listSlots({
       hospitalId: specialist.hospitalId,
       specialistId: doctorId,
       date,

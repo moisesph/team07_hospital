@@ -1,115 +1,84 @@
-import { ButtonLink } from "../ui/Button";
+"use client";
+// components/auth/LoginPanel.tsx
 
-export default function LoginPanel() {
+import Link from "next/link";
+import { useActionState } from "react";
+
+import { signInAction, type AuthFormState } from "../../lib/auth/actions";
+import type { OAuthProviderOption } from "../../lib/auth/auth";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import AuthCard from "./AuthCard";
+import OAuthButtons from "./OAuthButtons";
+
+interface LoginPanelProps {
+  providers: OAuthProviderOption[];
+  callbackUrl: string;
+  errorMessage: string | null;
+}
+
+const initialState: AuthFormState = {};
+
+export default function LoginPanel({
+  providers,
+  callbackUrl,
+  errorMessage,
+}: LoginPanelProps) {
+  const [state, formAction, isPending] = useActionState(
+    signInAction,
+    initialState,
+  );
+
   return (
-    <>
-      <section className="login-panel" aria-labelledby="login-panel-title">
-        <p className="login-panel__eyebrow">Patient Services Portal</p>
-        <h1 className="login-panel__title" id="login-panel-title">
-          Sign in to your patient portal
-        </h1>
-        <p className="login-panel__description">
-          This page is reserved for sign-in to future patient-specific portal
-          services.
-        </p>
-
-        {/* TODO: Connect the authentication flow selected by the authentication teammate here. */}
-        <section
-          className="login-panel__integration"
-          aria-labelledby="login-integration-title"
-        >
-          <h2 id="login-integration-title">Authentication integration</h2>
-          <p>
-            The sign-in flow has not been selected or connected yet. This
-            integration area is reserved for the authentication teammate.
+    <AuthCard
+      titleId="login-title"
+      title="Sign in"
+      description="Sign in to manage your appointments and hospital services."
+      alert={state.formError ?? errorMessage}
+      footer={
+        <>
+          <p className="m-0">
+            New here?{" "}
+            <Link className="font-bold text-(--color-primary)" href="/signup">
+              Create an account
+            </Link>
           </p>
-        </section>
-
-        <p className="login-panel__status" role="status">
-          Sign-in is not available yet. No account or authentication service is
-          connected.
-        </p>
-
-        <div className="login-panel__action">
-          <ButtonLink href="/" variant="primary">
+          <Link className="font-bold text-(--color-primary)" href="/">
             Return to Home
-          </ButtonLink>
-        </div>
-      </section>
+          </Link>
+        </>
+      }
+    >
+      <form action={formAction} className="mt-6 grid gap-4">
+        <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-      <style>{`
-        .login-panel {
-          min-width: 0;
-          padding: clamp(1.5rem, 6vw, 3.5rem);
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-section);
-          box-shadow: var(--shadow-section);
-        }
+        <Input
+          id="login-email"
+          name="email"
+          type="email"
+          label="Email"
+          autoComplete="email"
+          required
+          defaultValue={state.values?.email}
+          errorMessage={state.fieldErrors?.email}
+        />
 
-        .login-panel__eyebrow {
-          margin: 0 0 0.65rem;
-          color: var(--color-primary);
-          font-size: 0.78rem;
-          font-weight: 700;
-          letter-spacing: 0.09em;
-          text-transform: uppercase;
-        }
+        <Input
+          id="login-password"
+          name="password"
+          type="password"
+          label="Password"
+          autoComplete="current-password"
+          required
+          errorMessage={state.fieldErrors?.password}
+        />
 
-        .login-panel__title {
-          margin: 0;
-          line-height: 1.2;
-        }
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "Signing in…" : "Sign in"}
+        </Button>
 
-        .login-panel__description {
-          max-width: 600px;
-          margin: 1rem 0 0;
-          color: var(--color-muted);
-          font-size: 1.05rem;
-          line-height: 1.7;
-        }
-
-        .login-panel__integration {
-          margin-top: 1.5rem;
-          padding: 1.25rem;
-          background: var(--color-background);
-          border: 1px dashed var(--color-border);
-          border-radius: var(--radius-control);
-        }
-
-        .login-panel__integration h2 {
-          margin: 0;
-          font-size: 1rem;
-        }
-
-        .login-panel__integration p {
-          margin: 0.55rem 0 0;
-          color: var(--color-muted);
-          line-height: 1.65;
-        }
-
-        .login-panel__status {
-          margin: 1.25rem 0 0;
-          color: var(--color-muted);
-          font-weight: 600;
-          line-height: 1.65;
-        }
-
-        .login-panel__action {
-          margin-top: 1.5rem;
-        }
-
-        @media (max-width: 600px) {
-          .login-panel {
-            padding: 1.25rem;
-          }
-
-          .login-panel__action,
-          .login-panel__action .ui-button {
-            width: 100%;
-          }
-        }
-      `}</style>
-    </>
+        <OAuthButtons providers={providers} disabled={isPending} />
+      </form>
+    </AuthCard>
   );
 }

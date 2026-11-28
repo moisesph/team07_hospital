@@ -1,29 +1,47 @@
+// app/login/page.tsx
+
+import { Suspense } from "react";
+
 import LoginPanel from "../../components/auth/LoginPanel";
 import { ButtonStyles } from "../../components/ui/Button";
+import { InputStyles } from "../../components/ui/Input";
+import { getOAuthProviderOptions } from "../../lib/auth/auth";
+import { getAuthErrorMessage } from "../../lib/auth/error-messages";
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{
+    callbackUrl?: string | string[];
+    error?: string | string[];
+  }>;
+}
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function LoginContent({ searchParams }: LoginPageProps) {
+  const query = await searchParams;
+
+  return (
+    <LoginPanel
+      providers={getOAuthProviderOptions()}
+      callbackUrl={firstValue(query.callbackUrl) ?? "/"}
+      errorMessage={getAuthErrorMessage(firstValue(query.error))}
+    />
+  );
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <>
-      <div className="login-page">
-        <LoginPanel />
+      <div className="mx-auto w-full max-w-xl px-4 py-8 sm:py-16">
+        <Suspense fallback={<p role="status">Loading sign-in…</p>}>
+          <LoginContent searchParams={searchParams} />
+        </Suspense>
       </div>
 
       <ButtonStyles />
-
-      <style>{`
-        .login-page {
-          width: min(760px, calc(100% - 2rem));
-          margin-inline: auto;
-          padding-block: clamp(2rem, 8vw, 5rem);
-        }
-
-        @media (max-width: 600px) {
-          .login-page {
-            width: calc(100% - 1.25rem);
-            padding-block: 1.25rem 2rem;
-          }
-        }
-      `}</style>
+      <InputStyles />
     </>
   );
 }

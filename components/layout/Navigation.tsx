@@ -1,4 +1,5 @@
 "use client";
+// components/layout/Navigation.tsx
 
 import Link from "next/link";
 import { Suspense } from "react";
@@ -40,14 +41,25 @@ const navigationItems = [
     href: "/orders",
     icon: "delivery",
   },
-  {
-    label: "Login",
-    href: "/login",
-    icon: "login",
-  },
 ] as const;
 
-interface NavigationLinksProps {
+const loginItem = {
+  label: "Login",
+  href: "/login",
+  icon: "login",
+} as const;
+
+const accountItem = {
+  label: "My account",
+  href: "/account",
+  icon: "account",
+} as const;
+
+interface NavigationProps {
+  isSignedIn: boolean;
+}
+
+interface NavigationLinksProps extends NavigationProps {
   pathname?: string;
 }
 
@@ -90,11 +102,28 @@ function LoginIcon() {
   );
 }
 
-function NavigationLinks({ pathname }: NavigationLinksProps) {
+function AccountIcon() {
+  return (
+    <svg
+      className="hospital-navigation__icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
+function NavigationLinks({ pathname, isSignedIn }: NavigationLinksProps) {
+  // The last link changes: "Login" for visitors, "My account" after signing in.
+  const items = [...navigationItems, isSignedIn ? accountItem : loginItem];
+
   return (
     <nav className="hospital-navigation" aria-label="Main navigation">
       <ul className="hospital-navigation__list">
-        {navigationItems.map(({ label, href, icon }) => {
+        {items.map(({ label, href, icon }) => {
           const isActive =
             pathname !== undefined && isActivePath(pathname, href);
 
@@ -107,6 +136,7 @@ function NavigationLinks({ pathname }: NavigationLinksProps) {
               >
                 {icon === "delivery" ? <DeliveryIcon /> : null}
                 {icon === "login" ? <LoginIcon /> : null}
+                {icon === "account" ? <AccountIcon /> : null}
                 <span>{label}</span>
               </Link>
             </li>
@@ -117,21 +147,21 @@ function NavigationLinks({ pathname }: NavigationLinksProps) {
   );
 }
 
-function ActiveNavigation() {
+function ActiveNavigation({ isSignedIn }: NavigationProps) {
   const pathname = usePathname();
 
-  return <NavigationLinks pathname={pathname} />;
+  return <NavigationLinks pathname={pathname} isSignedIn={isSignedIn} />;
 }
 
-function NavigationFallback() {
-  return <NavigationLinks />;
+function NavigationFallback({ isSignedIn }: NavigationProps) {
+  return <NavigationLinks isSignedIn={isSignedIn} />;
 }
 
-export default function Navigation() {
+export default function Navigation({ isSignedIn }: NavigationProps) {
   return (
     <>
-      <Suspense fallback={<NavigationFallback />}>
-        <ActiveNavigation />
+      <Suspense fallback={<NavigationFallback isSignedIn={isSignedIn} />}>
+        <ActiveNavigation isSignedIn={isSignedIn} />
       </Suspense>
 
       <style>{`

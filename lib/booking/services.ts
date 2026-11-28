@@ -1,7 +1,10 @@
+// lib/booking/services.ts
+
 import "server-only";
 
 import { randomUUID } from "node:crypto";
 
+import { getSessionBookingIdentity } from "../auth/booking-identity";
 import { getDb } from "../db";
 import {
   getHospitalById,
@@ -34,6 +37,12 @@ export interface BookingIdentityProvider {
   getCurrentIdentity(): Promise<BookingIdentity | null>;
 }
 
+/**
+ * MOCK: NOT A REAL LOGIN.
+ * Fake identities ("Alex Morgan", "Jordan Demo") for testing bookings without a database.
+ * Used only when BOOKING_DEMO_IDENTITY is set in .env.local, and never in production.
+ * TODO: delete this class when every teammate can sign in with a real account.
+ */
 export class MockBookingIdentityProvider
   implements BookingIdentityProvider
 {
@@ -74,9 +83,21 @@ export class MockBookingIdentityProvider
   }
 }
 
-// The authentication teammate replaces this adapter with the trusted session provider.
-export const bookingIdentityProvider: BookingIdentityProvider =
-  new MockBookingIdentityProvider();
+// MOCK switch: true only when BOOKING_DEMO_IDENTITY is set and the app is not in production.
+const useMockIdentity =
+  process.env.NODE_ENV !== "production" &&
+  Boolean(process.env.BOOKING_DEMO_IDENTITY);
+
+if (useMockIdentity) {
+  console.warn(
+    "[MOCK] BOOKING_DEMO_IDENTITY is set: bookings use a fake identity, not the real login.",
+  );
+}
+
+/** The real signed-in user (any role) by default. Visitors get null. */
+export const bookingIdentityProvider: BookingIdentityProvider = useMockIdentity
+  ? new MockBookingIdentityProvider()
+  : { getCurrentIdentity: () => getSessionBookingIdentity() };
 
 export interface SlotSelection {
   hospitalId: string;

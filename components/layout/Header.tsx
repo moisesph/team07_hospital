@@ -1,5 +1,25 @@
+// components/layout/Header.tsx
+
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
+
+import { auth } from "../../lib/auth/auth";
 import Navigation from "./Navigation";
+
+/**
+ * Only reads the session cookie. It does not need the database.
+ * Auth.js creates random security tokens while it checks the session,
+ * so `connection()` makes this part wait for a real visitor instead of
+ * running while Next.js prerenders the page.
+ */
+async function SessionNavigation() {
+  await connection();
+
+  const session = await auth();
+
+  return <Navigation isSignedIn={Boolean(session?.user)} />;
+}
 
 export default function Header() {
   return (
@@ -30,7 +50,9 @@ export default function Header() {
             </span>
           </Link>
 
-          <Navigation />
+          <Suspense fallback={<Navigation isSignedIn={false} />}>
+            <SessionNavigation />
+          </Suspense>
         </div>
       </header>
 
